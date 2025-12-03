@@ -524,6 +524,14 @@
         <button class="b-btn" onclick="addExpense()">新增紀錄</button>
     </div>
 
+    <div style="text-align:center; padding: 10px 20px;">
+        <button class="b-btn" onclick="exportExpensesToCSV()" style="background:#555; margin-bottom: 10px; font-size: 14px;">匯出至 Excel/試算表</button>
+    </div>
+    
+    <div id="exportOutput" style="display:none; margin: 0 20px 20px; padding: 10px; background: #fff; border: 1px dashed #ccc; border-radius: 2px;">
+        <p style="font-size:12px; margin-bottom: 5px; color:#555;">請**複製**以下文字，貼到 Excel 或 Google Sheet 的 **A1 儲存格**：</p>
+        <textarea id="csvData" style="width:100%; height:120px; font-size:12px; font-family: monospace; border: 1px solid #ddd; padding: 5px;"></textarea>
+    </div>
     <ul id="expenseList" class="expense-list">
         </ul>
     
@@ -605,43 +613,104 @@
         window.scrollTo(0,0);
     }
     
-    // 記帳功能邏輯
-    function addExpense() {
-        const itemInput = document.getElementById('budgetItem');
-        const amountInput = document.getElementById('budgetAmount');
-        const item = itemInput.value.trim();
-        // 將金額轉換為整數
-        const amount = parseInt(amountInput.value, 10); 
+// ... (保留 switchDay, switchMainTab 等行程切換函數)
 
-        if (item && !isNaN(amount) && amount > 0) {
-            const list = document.getElementById('expenseList');
-            const totalEl = document.getElementById('totalAmount');
-            
-            // 新增列表項目
-            const li = document.createElement('li');
-            li.classList.add('expense-item');
-            // toLocaleString() 格式化金額，加上千位分隔符
-            li.innerHTML = `<span>${item}</span><span>¥${amount.toLocaleString('en-US')}</span>`;
-            list.prepend(li); // 新增在最上方 (prepend)
+// ===========================================
+// 記帳功能邏輯 (已加入 localStorage 儲存與匯出功能)
+// ===========================================
 
-            // 更新總金額
-            let currentTotal = parseInt(totalEl.innerText.replace(/,/g, '') || '0', 10);
-            totalEl.innerText = (currentTotal + amount).toLocaleString('en-US');
+// 在頁面載入時，從 localStorage 載入資料
+window.addEventListener('DOMContentLoaded', () => {
+    loadExpenses();
+});
 
-            // 清除輸入框
-            itemInput.value = '';
-            amountInput.value = '';
-        } else {
-            alert('請輸入有效的消費項目和金額！');
-        }
+function loadExpenses() {
+    const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
+    const list = document.getElementById('expenseList');
+    let total = 0;
+    
+    list.innerHTML = ''; 
+
+    // 將最新的項目放在最上方
+    expenses.slice().reverse().forEach(exp => {
+        const li = document.createElement('li');
+        li.classList.add('expense-item');
+        li.innerHTML = `<span>${exp.item}</span><span>¥${exp.amount.toLocaleString('en-US')}</span>`;
+        list.prepend(li);
+        total += exp.amount;
+    });
+
+    document.getElementById('totalAmount').innerText = total.toLocaleString('en-US');
+}
+
+function addExpense() {
+    const itemInput = document.getElementById('budgetItem');
+    const amountInput = document.getElementById('budgetAmount');
+    const item = itemInput.value.trim();
+    const amount = parseInt(amountInput.value, 10); 
+
+    if (item && !isNaN(amount) && amount > 0) {
+        // 讀取舊資料並新增新資料
+        const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
+        const newExpense = { item: item, amount: amount, timestamp: Date.now() };
+        expenses.push(newExpense); 
+        
+        // 儲存回 localStorage
+        localStorage.setItem('tripExpenses', JSON.stringify(expenses));
+
+        // 清除輸入框
+        itemInput.value = '';
+        amountInput.value = '';
+        
+        // 重新載入並更新畫面
+        loadExpenses();
+        // 隱藏匯出框
+        document.getElementById('exportOutput').style.display = 'none';
+
+    } else {
+        alert('請輸入有效的消費項目和金額！');
+    }
+}
+
+function clearBudget() {
+    if (confirm('確定要清除所有記帳紀錄嗎？')) {
+        localStorage.removeItem('tripExpenses');
+        document.getElementById('expenseList').innerHTML = '';
+        document.getElementById('totalAmount').innerText = '0';
+        document.getElementById('exportOutput').style.display = 'none';
+    }
+}
+
+// 🎯 新增的匯出功能
+function exportExpensesToCSV() {
+    const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
+    const outputDiv = document.getElementById('exportOutput');
+    const textarea = document.getElementById('csvData');
+
+    if (expenses.length === 0) {
+        alert('目前沒有任何記帳紀錄可以匯出！');
+        return;
     }
 
-    function clearBudget() {
-        if (confirm('確定要清除所有記帳紀錄嗎？')) {
-            document.getElementById('expenseList').innerHTML = '';
-            document.getElementById('totalAmount').innerText = '0';
-        }
-    }
+    // 建立試算表格式內容 (使用 Tab 鍵 \t 分隔，這樣貼到 Excel 才能自動分欄)
+    let csvContent = "項目\t金額 (JPY)\n"; // 標題行
+
+    expenses.forEach(exp => {
+        // 清理項目名稱中的換行符
+        const cleanedItem = exp.item.replace(/[\t\n\r]/g, ' '); 
+        csvContent += `${cleanedItem}\t${exp.amount}\n`;
+    });
+
+    // 顯示輸出區塊並填入資料
+    textarea.value = csvContent;
+    outputDiv.style.display = 'block';
+    
+    // 自動選取文字，方便使用者一鍵複製
+    textarea.select();
+    alert('資料已顯示在下方方框，請複製文字後貼上到您的 Google Sheet 或 Excel。');
+}
+
+// ... (保留 Header Scroll Effect 函數)
 
     // Header Scroll Effect (使 Header 在滾動時有陰影)
     window.addEventListener('scroll', () => {
