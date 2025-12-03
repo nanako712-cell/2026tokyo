@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>東京橫濱河口湖之旅</title>
+<style>
+    /* 日式極簡配色系統 (Zen Style) */
+    :root {
+        --bg-color: #FAFAFA;       /* 背景：白練色 */
+        --card-bg: #FFFFFF;        /* 卡片：胡粉 */
+        --text-main: #333333;      /* 文字：墨 */
+        --text-sub: #888888;       /* 副標：錫色 */
+        --line-color: #EFEFEF;
+        
+        /* 分類識別色 (低飽和度) */
+        --accent-transport: #7698B3; /* 交通：藍鼠 */
+        --accent-spot: #8FA87A;      /* 景點：柳茶 */
+        --accent-food: #D4A373;      /* 餐飲：枯茶 */
+        
+        --tag-bg: #F0F0F0;
+        --nav-bg: rgba(255, 255, 255, 0.95);
+        --radius: 12px;
+        --shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+        font-family: -apple-system, "Helvetica Neue", "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        margin: 0;
+        padding-bottom: 90px;
+        font-weight: 300; /* 細體字風格 */
+        letter-spacing: 0.02em;
+        line-height: 1.6;
+    }
+
+    /* 頂部日期與天氣 */
+    header {
+        position: sticky;
+        top: 0;
+        background: var(--nav-bg);
+        backdrop-filter: blur(10px);
+        padding: 16px 20px;
+        z-index: 100;
+        border-bottom: 1px solid var(--line-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    h1 { margin: 0; font-size: 18px; font-weight: 500; color: var(--text-main); }
+    .date-pill { background: var(--text-main); color: #fff; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
+
+    /* 天氣模組 */
+    .weather-bar {
+        margin: 15px 20px 5px;
+        background: #EEF2F5;
+        padding: 10px 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+        color: #5F6C7B;
+        justify-content: space-between;
+    }
+    .weather-info { display: flex; align-items: center; font-weight: 500; }
+    .weather-link { font-size: 11px; text-decoration: none; color: var(--accent-transport); border: 1px solid var(--accent-transport); padding: 2px 6px; border-radius: 4px;}
+
+    /* 行程容器 */
+    .container { padding: 10px 20px; }
+
+    /* 卡片設計 */
+    .card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow);
+        position: relative;
+        border-left: 3px solid transparent;
+        transition: transform 0.1s;
+    }
+    .card:active { transform: scale(0.99); }
+
+    /* 分類邊框顏色 */
+    .card.transport { border-left-color: var(--accent-transport); }
+    .card.spot { border-left-color: var(--accent-spot); }
+    .card.food { border-left-color: var(--accent-food); }
+
+    .card-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: var(--text-sub);
+        font-weight: 500;
+    }
+
+    .card-title {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+    .icon { margin-right: 8px; font-size: 18px; }
+
+    .card-desc {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 12px;
+        white-space: pre-line; /* 支援換行 */
+    }
+
+    /* 攻略標籤 */
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: var(--tag-bg); color: #666; }
+    .tag.highlight { background: #FFF3E0; color: #D97706; font-weight: 500; } /* 必吃/重點 */
+    .tag.tip { background: #E8F5E9; color: #2E7D32; } /* 攻略 */
+
+    /* 導航按鈕 */
+    .btn-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--line-color);
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        color: var(--text-main);
+        font-weight: 500;
+        background: #fff;
+    }
+    .btn-nav:active { background: #f5f5f5; }
+
+    /* 底部導航 */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: #fff;
+        border-top: 1px solid var(--line-color);
+        display: flex;
+        padding-bottom: env(safe-area-inset-bottom);
+        z-index: 200;
+        height: 60px;
+    }
+    .nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: #BBB;
+        cursor: pointer;
+    }
+    .nav-item.active { color: var(--text-main); font-weight: 600; }
+    .nav-day { font-size: 16px; margin-bottom: 2px; }
+
+    /* 頁面切換 */
+    .page { display: none; opacity: 0; animation: fadeIn 0.3s forwards; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 工具頁樣式 */
+    .tool-section { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .tool-title { font-size: 15px; font-weight: 600; margin-bottom: 15px; border-left: 3px solid var(--accent-transport); padding-left: 10px; }
+    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+    .info-row:last-child { border-bottom: none; }
+    
+    /* 記帳樣式 */
+    .budget-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px; -webkit-appearance: none;}
+    .btn-add { width: 100%; background: var(--text-main); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; }
+    .expense-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+    .total-display { font-size: 20px; font-weight: 600; text-align: right; margin-top: 20px; }
+
+</style>
+</head>
+<body>
+
+<header>
+    <h1 id="page-title">Day 1 行程</h1>
+    <span class="date-pill" id="page-date">2/7</span>
+</header>
+
+<div class="container">
+
+    <div id="day1" class="page active">
+        <div class="weather-bar">
+            <div class="weather-info">🌤️ 成田/東京 6°C</div>
+            <a href="https://weathernews.jp/onebox/35.68/139.77" target="_blank" class="weather-link">詳細預報</a>
+        </div>
+
+        <div class="card transport">
+            <div class="card-meta">14:55 - 18:00</div>
+            <div class="card-title"><span class="icon">✈️</span> 抵達與移動</div>
+            <div class="card-desc">成田機場入境 → NEX 成田特快 → 品川 → 京急線 → 蒲田。</div>
+            <div class="tags"><span class="tag tip">記得買交通卡</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Gallery+House+Kamata" class="btn-nav" target="_blank">📍 導航：Gallery House</a>
+        </div>
+
+        <div class="card food">
+            <div class="card-meta">19:00 - 21:00</div>
+            <div class="card-title"><span class="icon">🍜</span> 蒲田拉麵 / 溫泉</div>
+            <div class="card-desc">選擇：家系拉麵、六厘舍或前往蒲田溫泉。</div>
+            <div class="tags"><span class="tag highlight">必吃拉麵</span><span class="tag tip">黑湯溫泉</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=蒲田溫泉" class="btn-nav" target="_blank">📍 導航：蒲田溫泉</a>
+        </div>
+    </div>
+
+    <div id="day2" class="page">
+        <div class="weather-bar"><div class="weather-info">☁️ 橫濱 7°C</div></div>
+
+        <div class="card transport">
+            <div class="card-meta">09:00</div>
+            <div class="card-title"><span class="icon">🚆</span> 前往橫濱</div>
+            <div class="card-desc">蒲田 → 橫濱 (JR 京濱東北線)。</div>
+        </div>
+
+        <div class="card spot">
+            <div class="card-meta">09:30 - 12:00</div>
+            <div class="card-title"><span class="icon">🎡</span> 港未來散策</div>
+            <div class="card-desc">大摩天輪、Queen’s Square、海邊拍照。</div>
+            <div class="tags"><span class="tag highlight">好拍</span><span class="tag tip">親子友善</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Yokohama+Cosmo+World" class="btn-nav" target="_blank">📍 導航：Cosmo World</a>
+        </div>
+
+        <div class="card spot">
+            <div class="card-meta">13:10 - 15:00</div>
+            <div class="card-title"><span class="icon">🧱</span> 橫濱紅磚倉庫</div>
+            <div class="card-desc">拍照超好看，可能有市集，店內有暖氣。</div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Yokohama+Red+Brick+Warehouse" class="btn-nav" target="_blank">📍 導航：紅磚倉庫</a>
+        </div>
+
+        <div class="card spot">
+            <div class="card-meta">15:15 - 16:30</div>
+            <div class="card-title"><span class="icon">🍜</span> 杯麵博物館</div>
+            <div class="card-desc">孩子一定超愛自己做杯麵。</div>
+            <div class="tags"><span class="tag highlight">親子必去</span><span class="tag tip">需預約</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Cup+Noodles+Museum+Yokohama" class="btn-nav" target="_blank">📍 導航：杯麵博物館</a>
+        </div>
+    </div>
+
+    <div id="day3" class="page">
+        <div class="weather-bar"><div class="weather-info">🗻 河口湖 -2°C (雪)</div></div>
+
+        <div class="card transport">
+            <div class="card-meta">09:00 - 11:30</div>
+            <div class="card-title"><span class="icon">🚌</span> 前往河口湖</div>
+            <div class="card-desc">蒲田→品川→大月(JR特急)→河口湖(富士急)。</div>
+            <div class="tags"><span class="tag tip">大景日</span></div>
+        </div>
+
+        <div class="card food">
+            <div class="card-meta">12:00</div>
+            <div class="card-title"><span class="icon">🍲</span> 餺飥藏 步成</div>
+            <div class="card-desc">必吃富士山鄉土料理。</div>
+            <div class="tags"><span class="tag highlight">必吃餺飥</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Hoto+Fudo" class="btn-nav" target="_blank">📍 導航：步成/不動</a>
+        </div>
+
+        <div class="card spot">
+            <div class="card-meta">13:15 - 15:30</div>
+            <div class="card-title"><span class="icon">🗻</span> 大石公園 & 自然生活館</div>
+            <div class="card-desc">最容易拍到富士山，二月有機會自然積雪。</div>
+            <div class="tags"><span class="tag highlight">富士山絕景</span><span class="tag tip">玩雪</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Oishi+Park" class="btn-nav" target="_blank">📍 導航：大石公園</a>
+        </div>
+
+        <div class="card food">
+            <div class="card-meta">17:00</div>
+            <div class="card-title"><span class="icon">🏨</span> 入住美富士園</div>
+            <div class="card-desc">泡湯 + 晚餐。</div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Hotel+Mifujien" class="btn-nav" target="_blank">📍 導航：美富士園</a>
+        </div>
+    </div>
+
+    <div id="day4" class="page">
+        <div class="weather-bar"><div class="weather-info">🌤️ 河口湖 0°C</div></div>
+
+        <div class="card spot">
+            <div class="card-meta">09:30 - 10:30</div>
+            <div class="card-title"><span class="icon">⛩</span> 河口淺間神社</div>
+            <div class="card-desc">森林能量，若階梯結冰就在前面拍照即可。</div>
+            <div class="tags"><span class="tag tip">能量景點</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Kawaguchi+Asama+Shrine" class="btn-nav" target="_blank">📍 導航：淺間神社</a>
+        </div>
+
+        <div class="card spot">
+            <div class="card-meta">11:00 - 12:00</div>
+            <div class="card-title"><span class="icon">🏘</span> 富士吉田懷舊商店街</div>
+            <div class="card-desc">經典日式商店街景色。午餐：吉田烏龍麵。</div>
+            <div class="tags"><span class="tag highlight">拍照熱點</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Honcho+Street+Fujiyoshida" class="btn-nav" target="_blank">📍 導航：商店街</a>
+        </div>
+
+        <div class="card transport">
+            <div class="card-meta">14:00</div>
+            <div class="card-title"><span class="icon">🚆</span> 返回東京</div>
+            <div class="card-desc">河口湖 → 大月 → 品川 → 蒲田 Gallery House。</div>
+        </div>
+    </div>
+
+    <div id="day5" class="page">
+        <div class="weather-bar"><div class="weather-info">🌤️ 東京 8°C</div></div>
+
+        <div class="card spot">
+            <div class="card-meta">11:00 - 13:00</div>
+            <div class="card-title"><span class="icon">⛩</span> 淺草寺 + 仲見世通</div>
+            <div class="card-desc">雷門、商店街。推薦去文化觀光中心展望台(免費)。</div>
+            <div class="tags"><span class="tag highlight">經典必去</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Sensoji+Temple" class="btn-nav" target="_blank">📍 導航：淺草寺</a>
+        </div>
+
+        <div class="card spot">
+            <div class="card-meta">14:00 - 16:30</div>
+            <div class="card-title"><span class="icon">🗼</span> 晴空塔 Skytree</div>
+            <div class="card-desc">展望台 + Solamachi 商場 (兒童區很棒)。</div>
+            <div class="tags"><span class="tag tip">親子友善</span><span class="tag highlight">購物</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Tokyo+Skytree" class="btn-nav" target="_blank">📍 導航：晴空塔</a>
+        </div>
+    </div>
+
+    <div id="day6" class="page">
+        <div class="weather-bar"><div class="weather-info">☁️ 東京 9°C</div></div>
+
+        <div class="card spot">
+            <div class="card-meta">09:00 - 10:00</div>
+            <div class="card-title"><span class="icon">🏞</span> 飛鳥山公園</div>
+            <div class="card-desc">京濱東北線直達。若有雪會超美，有單軌小纜車。</div>
+            <div class="tags"><span class="tag tip">私房景點</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Asukayama+Park" class="btn-nav" target="_blank">📍 導航：飛鳥山</a>
+        </div>
+
+        <div class="card spot">
+            <div class="card-meta">10:30 - 12:00</div>
+            <div class="card-title"><span class="icon">🐕</span> 澀谷 + 明治神宮</div>
+            <div class="card-desc">忠犬八公、十字路口。明治神宮散步。</div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Shibuya+Crossing" class="btn-nav" target="_blank">📍 導航：澀谷</a>
+        </div>
+
+        <div class="card spot">
+            <div class="card-meta">15:00 - 19:00</div>
+            <div class="card-title"><span class="icon">🌃</span> 六本木之丘 & 東京鐵塔</div>
+            <div class="card-desc">六本木看夕陽，鐵塔看夜景。</div>
+            <div class="tags"><span class="tag highlight">東京夜景</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Roppongi+Hills" class="btn-nav" target="_blank">📍 導航：六本木之丘</a>
+        </div>
+    </div>
+
+    <div id="day7" class="page">
+        <div class="weather-bar"><div class="weather-info">✈️ 東京 10°C</div></div>
+
+        <div class="card spot">
+            <div class="card-meta">09:00 - 12:00</div>
+            <div class="card-title"><span class="icon">☕</span> 最後採買 / 羽田展望台</div>
+            <div class="card-desc">選項：羽田空港展望台(近/好拍)、蒲田溫泉、上野阿美橫町、東京車站。</div>
+            <div class="tags"><span class="tag tip">自由活動</span></div>
+        </div>
+
+        <div class="card transport">
+            <div class="card-meta">15:00</div>
+            <div class="card-title"><span class="icon">🚆</span> 前往成田機場</div>
+            <div class="card-desc">蒲田 → 品川 → 成田 (NEX)。</div>
+            <div class="tags"><span class="tag highlight">18:05 起飛</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Narita+Airport" class="btn-nav" target="_blank">📍 導航：成田機場</a>
+        </div>
+    </div>
+
+    <div id="tools" class="page">
+        <div class="tool-section">
+            <div class="tool-title">✈️ 航班資訊</div>
+            <div class="info-row"><span>去程 (2/7)</span> <span>14:55 抵達成田</span></div>
+            <div class="info-row"><span>回程 (2/13)</span> <span>18:05 成田起飛</span></div>
+            <div class="info-row" style="color:var(--text-sub); font-size:12px; margin-top:5px;">*建議 15:30 前抵達機場櫃檯</div>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">🏠 住宿資訊</div>
+            <div class="info-row"><span>東京</span> <span>Gallery House Kamata</span></div>
+            <div class="info-row"><span>河口湖</span> <span>美富士園</span></div>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">📞 緊急聯絡</div>
+            <div class="info-row"><span>報警</span> <span style="font-weight:600">110</span></div>
+            <div class="info-row"><span>救護</span> <span style="font-weight:600">119</span></div>
+            <div class="info-row"><span>駐日代表處</span> <span style="color:#D32F2F">03-3280-7811</span></div>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">💰 簡易記帳</div>
+            <input type="text" id="itemDesc" class="budget-input" placeholder="項目 (如: 晚餐)">
+            <input type="number" id="itemPrice" class="budget-input" placeholder="金額 (日圓)">
+            <button class="btn-add" onclick="addExpense()">加入</button>
+            <div id="expenseList" style="margin-top:15px;"></div>
+            <div class="total-display">總計: ¥<span id="totalAmount">0</span></div>
+            <div style="text-align:center; margin-top:20px; color:#999; font-size:12px; cursor:pointer;" onclick="clearExpenses()">清除所有紀錄</div>
+        </div>
+    </div>
+
+</div>
+
+<nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchPage('day1', this, '2/7')"><span class="nav-day">7</span><span>D1</span></div>
+    <div class="nav-item" onclick="switchPage('day2', this, '2/8')"><span class="nav-day">8</span><span>D2</span></div>
+    <div class="nav-item" onclick="switchPage('day3', this, '2/9')"><span class="nav-day">9</span><span>D3</span></div>
+    <div class="nav-item" onclick="switchPage('day4', this, '2/10')"><span class="nav-day">10</span><span>D4</span></div>
+    <div class="nav-item" onclick="switchPage('day5', this, '2/11')"><span class="nav-day">11</span><span>D5</span></div>
+    <div class="nav-item" onclick="switchPage('day6', this, '2/12')"><span class="nav-day">12</span><span>D6</span></div>
+    <div class="nav-item" onclick="switchPage('day7', this, '2/13')"><span class="nav-day">13</span><span>D7</span></div>
+    <div class="nav-item" onclick="switchPage('tools', this, '工具')"><span>⚙️</span><span>工具</span></div>
+</nav>
+
+<script>
+    // 頁面切換邏輯
+    function switchPage(pageId, navElement, dateTitle) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        navElement.classList.add('active');
+        
+        // 更新標題
+        if(pageId === 'tools') {
+            document.getElementById('page-title').innerText = "旅遊小工具";
+            document.getElementById('page-date').style.display = 'none';
+        } else {
+            const dayNum = pageId.replace('day', '');
+            document.getElementById('page-title').innerText = `Day ${dayNum} 行程`;
+            document.getElementById('page-date').style.display = 'inline-block';
+            document.getElementById('page-date').innerText = dateTitle;
+        }
+        window.scrollTo(0,0);
+    }
+
+    // 記帳邏輯
+    let expenses = JSON.parse(localStorage.getItem('jp_expenses')) || [];
+
+    function renderExpenses() {
+        const list = document.getElementById('expenseList');
+        const totalEl = document.getElementById('totalAmount');
+        list.innerHTML = '';
+        let total = 0;
+        expenses.forEach(ex => {
+            total += Number(ex.price);
+            list.innerHTML += `<div class="expense-item"><span>${ex.desc}</span><span>¥${Number(ex.price).toLocaleString()}</span></div>`;
+        });
+        totalEl.innerText = total.toLocaleString();
+    }
+
+    function addExpense() {
+        const desc = document.getElementById('itemDesc').value;
+        const price = document.getElementById('itemPrice').value;
+        if(desc && price) {
+            expenses.push({desc, price});
+            localStorage.setItem('jp_expenses', JSON.stringify(expenses));
+            renderExpenses();
+            document.getElementById('itemDesc').value = '';
+            document.getElementById('itemPrice').value = '';
+        }
+    }
+
+    function clearExpenses() {
+        if(confirm('確定清除所有記帳資料？')) {
+            expenses = [];
+            localStorage.setItem('jp_expenses', JSON.stringify([]));
+            renderExpenses();
+        }
+    }
+
+    renderExpenses();
+</script>
+
+</body>
+</html>
