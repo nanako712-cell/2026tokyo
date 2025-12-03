@@ -3,473 +3,595 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>東京橫濱河口湖之旅</title>
+<title>TOKYO TRIP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=Shippori+Mincho:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-    /* 日式極簡配色系統 (Zen Style) */
     :root {
-        --bg-color: #FAFAFA;       /* 背景：白練色 */
-        --card-bg: #FFFFFF;        /* 卡片：胡粉 */
-        --text-main: #333333;      /* 文字：墨 */
-        --text-sub: #888888;       /* 副標：錫色 */
-        --line-color: #EFEFEF;
-        
-        /* 分類識別色 (低飽和度) */
-        --accent-transport: #7698B3; /* 交通：藍鼠 */
-        --accent-spot: #8FA87A;      /* 景點：柳茶 */
-        --accent-food: #D4A373;      /* 餐飲：枯茶 */
-        
-        --tag-bg: #F0F0F0;
-        --nav-bg: rgba(255, 255, 255, 0.95);
-        --radius: 12px;
-        --shadow: 0 2px 10px rgba(0,0,0,0.03);
+        --bg: #F9F9F9;
+        --card-bg: #FFFFFF;
+        --text-main: #1A1A1A;
+        --text-sub: #8C8C8C;
+        --accent: #A6A6A6; /* 極簡灰 */
+        --line: #EFEFEF;
+        --shadow: 0 4px 20px rgba(0,0,0,0.03);
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
-        font-family: -apple-system, "Helvetica Neue", "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
-        background-color: var(--bg-color);
+        font-family: 'Shippori Mincho', 'Noto Sans JP', serif;
+        background-color: var(--bg);
         color: var(--text-main);
         margin: 0;
-        padding-bottom: 90px;
-        font-weight: 300; /* 細體字風格 */
-        letter-spacing: 0.02em;
-        line-height: 1.6;
+        padding-bottom: 80px;
+        -webkit-font-smoothing: antialiased;
+        letter-spacing: 0.05em;
     }
 
-    /* 頂部日期與天氣 */
+    /* SVG Icons */
+    .icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; vertical-align: middle; }
+    .icon-sm { width: 14px; height: 14px; }
+    .icon-lg { width: 24px; height: 24px; }
+
+    /* Header */
     header {
+        background: var(--bg);
+        padding-top: 20px;
+        text-align: center;
         position: sticky;
         top: 0;
-        background: var(--nav-bg);
-        backdrop-filter: blur(10px);
-        padding: 16px 20px;
         z-index: 100;
-        border-bottom: 1px solid var(--line-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
 
-    h1 { margin: 0; font-size: 18px; font-weight: 500; color: var(--text-main); }
-    .date-pill { background: var(--text-main); color: #fff; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
-
-    /* 天氣模組 */
-    .weather-bar {
-        margin: 15px 20px 5px;
-        background: #EEF2F5;
-        padding: 10px 16px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        font-size: 13px;
-        color: #5F6C7B;
-        justify-content: space-between;
+    .trip-tag {
+        font-family: 'Noto Sans JP', sans-serif;
+        font-size: 10px;
+        color: var(--text-sub);
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        margin-bottom: 5px;
+        display: block;
     }
-    .weather-info { display: flex; align-items: center; font-weight: 500; }
-    .weather-link { font-size: 11px; text-decoration: none; color: var(--accent-transport); border: 1px solid var(--accent-transport); padding: 2px 6px; border-radius: 4px;}
 
-    /* 行程容器 */
-    .container { padding: 10px 20px; }
+    h1 {
+        font-size: 20px;
+        font-weight: 500;
+        margin: 0 0 15px 0;
+    }
 
-    /* 卡片設計 */
+    /* Date Scroller */
+    .date-scroller {
+        display: flex;
+        overflow-x: auto;
+        padding: 10px 20px;
+        gap: 20px;
+        scrollbar-width: none; /* Firefox */
+        background: var(--bg);
+        border-bottom: 1px solid transparent;
+        transition: border 0.3s;
+    }
+    .date-scroller::-webkit-scrollbar { display: none; }
+    
+    header.scrolled .date-scroller {
+        border-bottom: 1px solid #ddd;
+    }
+
+    .date-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 45px;
+        opacity: 0.4;
+        transition: 0.3s;
+        cursor: pointer;
+    }
+    .date-item.active { opacity: 1; transform: scale(1.05); }
+    .date-item .dow { font-size: 9px; font-family: 'Noto Sans JP'; font-weight: 500; margin-bottom: 4px; }
+    .date-item .day { font-size: 18px; font-family: 'Shippori Mincho'; font-weight: 600; }
+    .date-item.active .day { border-bottom: 2px solid #a33e3e; padding-bottom: 2px; } /* 紅點點綴 */
+
+    /* Hero Section */
+    .hero {
+        position: relative;
+        margin: 10px 20px 20px 20px;
+        border-radius: 4px;
+        overflow: hidden;
+        height: 200px;
+        box-shadow: var(--shadow);
+    }
+    .hero img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-text {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+        color: white;
+    }
+    .hero-title { font-size: 22px; font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .hero-subtitle { font-size: 11px; font-family: 'Noto Sans JP'; opacity: 0.9; margin-top: 5px; display: flex; align-items: center; gap: 5px;}
+
+    /* Weather Widget */
+    .weather-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 25px 20px 25px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+    }
+    .weather-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .weather-time { font-size: 10px; color: var(--text-sub); font-family: 'Noto Sans JP'; }
+    .weather-temp { font-size: 14px; font-weight: 500; }
+
+    /* Container */
+    .container { padding: 0 20px; }
+
+    /* Timeline Cards */
+    .timeline-item {
+        position: relative;
+        padding-left: 20px; /* Space for line if needed, currently clean */
+        margin-bottom: 30px;
+        animation: fadeIn 0.4s ease;
+    }
+    
+    .time-badge {
+        font-family: 'Shippori Mincho';
+        font-size: 24px;
+        font-weight: 400;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+    .time-badge span { font-size: 12px; color: var(--text-sub); font-family: 'Noto Sans JP'; border: 1px solid var(--text-sub); padding: 1px 6px; border-radius: 2px; }
+
     .card {
         background: var(--card-bg);
-        border-radius: var(--radius);
+        border-radius: 2px; /* Less rounded */
         padding: 20px;
-        margin-bottom: 16px;
         box-shadow: var(--shadow);
-        position: relative;
-        border-left: 3px solid transparent;
-        transition: transform 0.1s;
-    }
-    .card:active { transform: scale(0.99); }
-
-    /* 分類邊框顏色 */
-    .card.transport { border-left-color: var(--accent-transport); }
-    .card.spot { border-left-color: var(--accent-spot); }
-    .card.food { border-left-color: var(--accent-food); }
-
-    .card-meta {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 12px;
-        color: var(--text-sub);
-        font-weight: 500;
+        border: 1px solid #F5F5F5;
     }
 
     .card-title {
-        font-size: 16px;
-        font-weight: 500;
-        margin-bottom: 8px;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 5px;
+        letter-spacing: 0.08em;
+    }
+    .card-loc {
+        font-size: 11px;
+        color: var(--text-sub);
+        margin-bottom: 15px;
+        font-family: 'Noto Sans JP';
         display: flex;
         align-items: center;
-    }
-    .icon { margin-right: 8px; font-size: 18px; }
-
-    .card-desc {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 12px;
-        white-space: pre-line; /* 支援換行 */
+        gap: 4px;
     }
 
-    /* 攻略標籤 */
-    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-    .tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: var(--tag-bg); color: #666; }
-    .tag.highlight { background: #FFF3E0; color: #D97706; font-weight: 500; } /* 必吃/重點 */
-    .tag.tip { background: #E8F5E9; color: #2E7D32; } /* 攻略 */
+    /* Info Blocks (Reservation/Phone) */
+    .info-block {
+        background: #F8F8F8;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        border-radius: 2px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .info-label { font-size: 9px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; }
+    .info-value { font-size: 14px; font-weight: 500; font-family: 'Noto Sans JP'; }
+    .copy-btn { border: none; background: none; color: var(--text-sub); cursor: pointer; }
 
-    /* 導航按鈕 */
+    .desc {
+        font-size: 13px;
+        line-height: 1.8;
+        color: #555;
+        font-family: 'Noto Sans JP';
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px dashed var(--line);
+    }
+
+    /* Tags */
+    .tag { font-size: 10px; display: inline-block; border-bottom: 1px solid; padding-bottom: 1px; margin-right: 8px; }
+    .tag-food { color: #A0522D; border-color: #A0522D; }
+    .tag-spot { color: #2F4F4F; border-color: #2F4F4F; }
+
+    /* Button */
     .btn-nav {
         display: flex;
         align-items: center;
         justify-content: center;
         width: 100%;
-        padding: 10px;
-        border: 1px solid var(--line-color);
-        border-radius: 8px;
+        background: #1A1A1A;
+        color: white;
+        padding: 12px 0;
+        border-radius: 2px;
         text-decoration: none;
-        font-size: 13px;
-        color: var(--text-main);
-        font-weight: 500;
-        background: #fff;
+        font-size: 12px;
+        font-family: 'Noto Sans JP';
+        margin-top: 15px;
+        gap: 8px;
     }
-    .btn-nav:active { background: #f5f5f5; }
 
-    /* 底部導航 */
+    /* Budget Page Styles */
+    .budget-header { text-align: center; padding: 40px 20px; background: white; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .budget-total-label { font-size: 12px; color: var(--text-sub); margin-bottom: 5px; }
+    .budget-total-amount { font-size: 36px; font-weight: 500; }
+    .budget-input-group { background: white; padding: 20px; margin: 0 20px; box-shadow: var(--shadow); border-radius: 2px; }
+    .b-input { width: 100%; border: none; border-bottom: 1px solid #ddd; padding: 10px 0; font-family: 'Noto Sans JP'; font-size: 14px; margin-bottom: 15px; border-radius: 0; }
+    .b-input:focus { outline: none; border-color: #1A1A1A; }
+    .b-btn { width: 100%; background: #1A1A1A; color: white; border: none; padding: 12px; font-size: 12px; cursor: pointer; }
+    .expense-list { list-style: none; padding: 0; margin: 20px; }
+    .expense-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #eee; font-family: 'Noto Sans JP'; font-size: 13px; }
+
+    /* Bottom Nav */
     .bottom-nav {
         position: fixed;
-        bottom: 0; left: 0; right: 0;
-        background: #fff;
-        border-top: 1px solid var(--line-color);
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--line);
         display: flex;
-        padding-bottom: env(safe-area-inset-bottom);
+        justify-content: space-around;
+        padding: 10px 0;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
         z-index: 200;
-        height: 60px;
     }
-    .nav-item {
+    .nav-btn {
+        background: none; border: none;
+        display: flex; flex-direction: column; align-items: center; gap: 4px;
+        font-family: 'Noto Sans JP'; font-size: 9px; color: #AAA; cursor: pointer;
         flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        color: #BBB;
-        cursor: pointer;
     }
-    .nav-item.active { color: var(--text-main); font-weight: 600; }
-    .nav-day { font-size: 16px; margin-bottom: 2px; }
+    .nav-btn.active { color: #1A1A1A; }
+    .nav-btn svg { stroke-width: 1.2; }
+    .nav-btn.active svg { stroke-width: 2; }
 
-    /* 頁面切換 */
-    .page { display: none; opacity: 0; animation: fadeIn 0.3s forwards; }
+    /* Page Visibility */
+    .page { display: none; }
     .page.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* 工具頁樣式 */
-    .tool-section { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: var(--shadow); }
-    .tool-title { font-size: 15px; font-weight: 600; margin-bottom: 15px; border-left: 3px solid var(--accent-transport); padding-left: 10px; }
-    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
-    .info-row:last-child { border-bottom: none; }
     
-    /* 記帳樣式 */
-    .budget-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 16px; -webkit-appearance: none;}
-    .btn-add { width: 100%; background: var(--text-main); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; }
-    .expense-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
-    .total-display { font-size: 20px; font-weight: 600; text-align: right; margin-top: 20px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 </style>
 </head>
 <body>
 
-<header>
-    <h1 id="page-title">Day 1 行程</h1>
-    <span class="date-pill" id="page-date">2/7</span>
+<header id="main-header">
+    <span class="trip-tag">TOKYO TRIP 2025</span>
+    <h1 id="page-title">Day 1</h1>
+    
+    <div class="date-scroller" id="dateScroller">
+        <div class="date-item active" onclick="switchDay(1)">
+            <span class="dow">FRI</span><span class="day">07</span>
+        </div>
+        <div class="date-item" onclick="switchDay(2)">
+            <span class="dow">SAT</span><span class="day">08</span>
+        </div>
+        <div class="date-item" onclick="switchDay(3)">
+            <span class="dow">SUN</span><span class="day">09</span>
+        </div>
+        <div class="date-item" onclick="switchDay(4)">
+            <span class="dow">MON</span><span class="day">10</span>
+        </div>
+        <div class="date-item" onclick="switchDay(5)">
+            <span class="dow">TUE</span><span class="day">11</span>
+        </div>
+        <div class="date-item" onclick="switchDay(6)">
+            <span class="dow">WED</span><span class="day">12</span>
+        </div>
+        <div class="date-item" onclick="switchDay(7)">
+            <span class="dow">THU</span><span class="day">13</span>
+        </div>
+    </div>
 </header>
 
-<div class="container">
-
+<div id="itinerary-container">
+    
     <div id="day1" class="page active">
-        <div class="weather-bar">
-            <div class="weather-info">🌤️ 成田/東京 6°C</div>
-            <a href="https://weathernews.jp/onebox/35.68/139.77" target="_blank" class="weather-link">詳細預報</a>
+        <div class="hero">
+            <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1000&q=80" alt="Tokyo">
+            <div class="hero-text">
+                <div class="hero-title">抵達東京</div>
+                <div class="hero-subtitle">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 21s-8-4.28-8-11.28a8 8 0 0 1 16 0c0 7-8 11.28-8 11.28z"/><circle cx="12" cy="10" r="3"/></svg>
+                    祐天寺・中目黑
+                </div>
+            </div>
         </div>
 
-        <div class="card transport">
-            <div class="card-meta">14:55 - 18:00</div>
-            <div class="card-title"><span class="icon">✈️</span> 抵達與移動</div>
-            <div class="card-desc">成田機場入境 → NEX 成田特快 → 品川 → 京急線 → 蒲田。</div>
-            <div class="tags"><span class="tag tip">記得買交通卡</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Gallery+House+Kamata" class="btn-nav" target="_blank">📍 導航：Gallery House</a>
+        <div class="weather-row">
+            <div class="weather-col"><span class="weather-time">現在</span><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span class="weather-temp">15°</span></div>
+            <div class="weather-col"><span class="weather-time">14:00</span><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span class="weather-temp">16°</span></div>
+            <div class="weather-col"><span class="weather-time">16:00</span><svg class="icon" viewBox="0 0 24 24"><path d="M17.5 19c0-1.7-1.3-3-3-3h-11a4 4 0 0 1-.8-7.9 5 5 0 0 1 9.8-1.2 3 3 0 0 1 5 1.7"/></svg><span class="weather-temp">14°</span></div>
+            <div class="weather-col"><span class="weather-time">18:00</span><svg class="icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="weather-temp">12°</span></div>
         </div>
 
-        <div class="card food">
-            <div class="card-meta">19:00 - 21:00</div>
-            <div class="card-title"><span class="icon">🍜</span> 蒲田拉麵 / 溫泉</div>
-            <div class="card-desc">選擇：家系拉麵、六厘舍或前往蒲田溫泉。</div>
-            <div class="tags"><span class="tag highlight">必吃拉麵</span><span class="tag tip">黑湯溫泉</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=蒲田溫泉" class="btn-nav" target="_blank">📍 導航：蒲田溫泉</a>
+        <div class="container">
+            <div class="timeline-item">
+                <div class="time-badge">13:00 <span>TRANSPORT</span></div>
+                <div class="card">
+                    <div class="card-title">成田機場 → 祐天寺</div>
+                    <div class="card-loc"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 21s-8-4.28-8-11.28a8 8 0 0 1 16 0c0 7-8 11.28-8 11.28z"/><circle cx="12" cy="10" r="3"/></svg> Narita Airport</div>
+                    
+                    <div class="info-block">
+                        <div>
+                            <div class="info-label">RESERVATION</div>
+                            <div class="info-value">Narita Express (NEX)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="desc">
+                        領完行李後前往 B1 搭乘成田特快 (NEX) 至澀谷站，轉乘東急東橫線至祐天寺站。
+                    </div>
+                    <a href="https://goo.gl/maps/example" class="btn-nav" target="_blank">
+                        <svg class="icon" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg> 
+                        開始導航
+                    </a>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="time-badge">15:00 <span>HOTEL</span></div>
+                <div class="card">
+                    <div class="card-title">東急 Stay 祐天寺</div>
+                    <div class="card-loc"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 21s-8-4.28-8-11.28a8 8 0 0 1 16 0c0 7-8 11.28-8 11.28z"/><circle cx="12" cy="10" r="3"/></svg> Yutenji</div>
+                    
+                    <div class="info-block">
+                        <div>
+                            <div class="info-label">CHECK-IN</div>
+                            <div class="info-value">15:00</div>
+                        </div>
+                    </div>
+
+                    <div class="desc">
+                        先辦理入住，放置行李。飯店附近有許多選物店。
+                    </div>
+                    <a href="https://goo.gl/maps/example" class="btn-nav" target="_blank">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> 
+                        飯店導航
+                    </a>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="time-badge">16:00 <span>ACTIVITY</span></div>
+                <div class="card">
+                    <div class="card-title">中目黑散策</div>
+                    <div class="desc">
+                        <span class="tag tag-food">COFFEE</span> Onibus Coffee<br>
+                        <span class="tag tag-spot">SHOP</span> 蔦屋書店
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="time-badge">19:00 <span>DINNER</span></div>
+                <div class="card">
+                    <div class="card-title">澀谷晚餐 & 夜景</div>
+                    <div class="info-block">
+                        <div>
+                            <div class="info-label">BOOKING</div>
+                            <div class="info-value">Shibuya Sky (夕陽場)</div>
+                        </div>
+                    </div>
+                    <div class="desc">晚餐建議：魚金 (Uokin) 或當地居酒屋。</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="day2" class="page">
-        <div class="weather-bar"><div class="weather-info">☁️ 橫濱 7°C</div></div>
-
-        <div class="card transport">
-            <div class="card-meta">09:00</div>
-            <div class="card-title"><span class="icon">🚆</span> 前往橫濱</div>
-            <div class="card-desc">蒲田 → 橫濱 (JR 京濱東北線)。</div>
-        </div>
-
-        <div class="card spot">
-            <div class="card-meta">09:30 - 12:00</div>
-            <div class="card-title"><span class="icon">🎡</span> 港未來散策</div>
-            <div class="card-desc">大摩天輪、Queen’s Square、海邊拍照。</div>
-            <div class="tags"><span class="tag highlight">好拍</span><span class="tag tip">親子友善</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Yokohama+Cosmo+World" class="btn-nav" target="_blank">📍 導航：Cosmo World</a>
-        </div>
-
-        <div class="card spot">
-            <div class="card-meta">13:10 - 15:00</div>
-            <div class="card-title"><span class="icon">🧱</span> 橫濱紅磚倉庫</div>
-            <div class="card-desc">拍照超好看，可能有市集，店內有暖氣。</div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Yokohama+Red+Brick+Warehouse" class="btn-nav" target="_blank">📍 導航：紅磚倉庫</a>
-        </div>
-
-        <div class="card spot">
-            <div class="card-meta">15:15 - 16:30</div>
-            <div class="card-title"><span class="icon">🍜</span> 杯麵博物館</div>
-            <div class="card-desc">孩子一定超愛自己做杯麵。</div>
-            <div class="tags"><span class="tag highlight">親子必去</span><span class="tag tip">需預約</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Cup+Noodles+Museum+Yokohama" class="btn-nav" target="_blank">📍 導航：杯麵博物館</a>
+        <div class="hero"><img src="https://images.unsplash.com/photo-1545389422-b25c3459c3a6?auto=format&fit=crop&w=1000&q=80" alt="Skytree"><div class="hero-text"><div class="hero-title">東京地標</div><div class="hero-subtitle">晴空塔・六本木</div></div></div>
+        <div class="container">
+            <div class="timeline-item"><div class="time-badge">09:30</div><div class="card"><div class="card-title">晴空塔 + Solamachi</div><div class="desc">地標巡禮與購物。</div></div></div>
+            <div class="timeline-item"><div class="time-badge">14:00</div><div class="card"><div class="card-title">飛鳥山公園</div><div class="desc">小纜車、野餐區。</div></div></div>
         </div>
     </div>
-
+    
     <div id="day3" class="page">
-        <div class="weather-bar"><div class="weather-info">🗻 河口湖 -2°C (雪)</div></div>
-
-        <div class="card transport">
-            <div class="card-meta">09:00 - 11:30</div>
-            <div class="card-title"><span class="icon">🚌</span> 前往河口湖</div>
-            <div class="card-desc">蒲田→品川→大月(JR特急)→河口湖(富士急)。</div>
-            <div class="tags"><span class="tag tip">大景日</span></div>
-        </div>
-
-        <div class="card food">
-            <div class="card-meta">12:00</div>
-            <div class="card-title"><span class="icon">🍲</span> 餺飥藏 步成</div>
-            <div class="card-desc">必吃富士山鄉土料理。</div>
-            <div class="tags"><span class="tag highlight">必吃餺飥</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Hoto+Fudo" class="btn-nav" target="_blank">📍 導航：步成/不動</a>
-        </div>
-
-        <div class="card spot">
-            <div class="card-meta">13:15 - 15:30</div>
-            <div class="card-title"><span class="icon">🗻</span> 大石公園 & 自然生活館</div>
-            <div class="card-desc">最容易拍到富士山，二月有機會自然積雪。</div>
-            <div class="tags"><span class="tag highlight">富士山絕景</span><span class="tag tip">玩雪</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Oishi+Park" class="btn-nav" target="_blank">📍 導航：大石公園</a>
-        </div>
-
-        <div class="card food">
-            <div class="card-meta">17:00</div>
-            <div class="card-title"><span class="icon">🏨</span> 入住美富士園</div>
-            <div class="card-desc">泡湯 + 晚餐。</div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Hotel+Mifujien" class="btn-nav" target="_blank">📍 導航：美富士園</a>
+        <div class="hero"><img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=1000&q=80" alt="Fuji"><div class="hero-text"><div class="hero-title">前往富士山</div><div class="hero-subtitle">御殿場・Outlets</div></div></div>
+        <div class="container">
+            <div class="timeline-item"><div class="time-badge">10:00 <span>TRANSPORT</span></div><div class="card"><div class="card-title">富士回遊 / 高速巴士</div><div class="desc">新宿 → 御殿場</div></div></div>
         </div>
     </div>
 
-    <div id="day4" class="page">
-        <div class="weather-bar"><div class="weather-info">🌤️ 河口湖 0°C</div></div>
-
-        <div class="card spot">
-            <div class="card-meta">09:30 - 10:30</div>
-            <div class="card-title"><span class="icon">⛩</span> 河口淺間神社</div>
-            <div class="card-desc">森林能量，若階梯結冰就在前面拍照即可。</div>
-            <div class="tags"><span class="tag tip">能量景點</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Kawaguchi+Asama+Shrine" class="btn-nav" target="_blank">📍 導航：淺間神社</a>
-        </div>
-
-        <div class="card spot">
-            <div class="card-meta">11:00 - 12:00</div>
-            <div class="card-title"><span class="icon">🏘</span> 富士吉田懷舊商店街</div>
-            <div class="card-desc">經典日式商店街景色。午餐：吉田烏龍麵。</div>
-            <div class="tags"><span class="tag highlight">拍照熱點</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Honcho+Street+Fujiyoshida" class="btn-nav" target="_blank">📍 導航：商店街</a>
-        </div>
-
-        <div class="card transport">
-            <div class="card-meta">14:00</div>
-            <div class="card-title"><span class="icon">🚆</span> 返回東京</div>
-            <div class="card-desc">河口湖 → 大月 → 品川 → 蒲田 Gallery House。</div>
-        </div>
-    </div>
-
-    <div id="day5" class="page">
-        <div class="weather-bar"><div class="weather-info">🌤️ 東京 8°C</div></div>
-
-        <div class="card spot">
-            <div class="card-meta">11:00 - 13:00</div>
-            <div class="card-title"><span class="icon">⛩</span> 淺草寺 + 仲見世通</div>
-            <div class="card-desc">雷門、商店街。推薦去文化觀光中心展望台(免費)。</div>
-            <div class="tags"><span class="tag highlight">經典必去</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Sensoji+Temple" class="btn-nav" target="_blank">📍 導航：淺草寺</a>
-        </div>
-
-        <div class="card spot">
-            <div class="card-meta">14:00 - 16:30</div>
-            <div class="card-title"><span class="icon">🗼</span> 晴空塔 Skytree</div>
-            <div class="card-desc">展望台 + Solamachi 商場 (兒童區很棒)。</div>
-            <div class="tags"><span class="tag tip">親子友善</span><span class="tag highlight">購物</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Tokyo+Skytree" class="btn-nav" target="_blank">📍 導航：晴空塔</a>
-        </div>
-    </div>
-
-    <div id="day6" class="page">
-        <div class="weather-bar"><div class="weather-info">☁️ 東京 9°C</div></div>
-
-        <div class="card spot">
-            <div class="card-meta">09:00 - 10:00</div>
-            <div class="card-title"><span class="icon">🏞</span> 飛鳥山公園</div>
-            <div class="card-desc">京濱東北線直達。若有雪會超美，有單軌小纜車。</div>
-            <div class="tags"><span class="tag tip">私房景點</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Asukayama+Park" class="btn-nav" target="_blank">📍 導航：飛鳥山</a>
-        </div>
-
-        <div class="card spot">
-            <div class="card-meta">10:30 - 12:00</div>
-            <div class="card-title"><span class="icon">🐕</span> 澀谷 + 明治神宮</div>
-            <div class="card-desc">忠犬八公、十字路口。明治神宮散步。</div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Shibuya+Crossing" class="btn-nav" target="_blank">📍 導航：澀谷</a>
-        </div>
-
-        <div class="card spot">
-            <div class="card-meta">15:00 - 19:00</div>
-            <div class="card-title"><span class="icon">🌃</span> 六本木之丘 & 東京鐵塔</div>
-            <div class="card-desc">六本木看夕陽，鐵塔看夜景。</div>
-            <div class="tags"><span class="tag highlight">東京夜景</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Roppongi+Hills" class="btn-nav" target="_blank">📍 導航：六本木之丘</a>
-        </div>
-    </div>
-
-    <div id="day7" class="page">
-        <div class="weather-bar"><div class="weather-info">✈️ 東京 10°C</div></div>
-
-        <div class="card spot">
-            <div class="card-meta">09:00 - 12:00</div>
-            <div class="card-title"><span class="icon">☕</span> 最後採買 / 羽田展望台</div>
-            <div class="card-desc">選項：羽田空港展望台(近/好拍)、蒲田溫泉、上野阿美橫町、東京車站。</div>
-            <div class="tags"><span class="tag tip">自由活動</span></div>
-        </div>
-
-        <div class="card transport">
-            <div class="card-meta">15:00</div>
-            <div class="card-title"><span class="icon">🚆</span> 前往成田機場</div>
-            <div class="card-desc">蒲田 → 品川 → 成田 (NEX)。</div>
-            <div class="tags"><span class="tag highlight">18:05 起飛</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Narita+Airport" class="btn-nav" target="_blank">📍 導航：成田機場</a>
-        </div>
-    </div>
-
-    <div id="tools" class="page">
-        <div class="tool-section">
-            <div class="tool-title">✈️ 航班資訊</div>
-            <div class="info-row"><span>去程 (2/7)</span> <span>14:55 抵達成田</span></div>
-            <div class="info-row"><span>回程 (2/13)</span> <span>18:05 成田起飛</span></div>
-            <div class="info-row" style="color:var(--text-sub); font-size:12px; margin-top:5px;">*建議 15:30 前抵達機場櫃檯</div>
-        </div>
-
-        <div class="tool-section">
-            <div class="tool-title">🏠 住宿資訊</div>
-            <div class="info-row"><span>東京</span> <span>Gallery House Kamata</span></div>
-            <div class="info-row"><span>河口湖</span> <span>美富士園</span></div>
-        </div>
-
-        <div class="tool-section">
-            <div class="tool-title">📞 緊急聯絡</div>
-            <div class="info-row"><span>報警</span> <span style="font-weight:600">110</span></div>
-            <div class="info-row"><span>救護</span> <span style="font-weight:600">119</span></div>
-            <div class="info-row"><span>駐日代表處</span> <span style="color:#D32F2F">03-3280-7811</span></div>
-        </div>
-
-        <div class="tool-section">
-            <div class="tool-title">💰 簡易記帳</div>
-            <input type="text" id="itemDesc" class="budget-input" placeholder="項目 (如: 晚餐)">
-            <input type="number" id="itemPrice" class="budget-input" placeholder="金額 (日圓)">
-            <button class="btn-add" onclick="addExpense()">加入</button>
-            <div id="expenseList" style="margin-top:15px;"></div>
-            <div class="total-display">總計: ¥<span id="totalAmount">0</span></div>
-            <div style="text-align:center; margin-top:20px; color:#999; font-size:12px; cursor:pointer;" onclick="clearExpenses()">清除所有紀錄</div>
-        </div>
-    </div>
+    <div id="day4" class="page"><div class="container" style="padding-top:20px; text-align:center;">Day 4 Content</div></div>
+    <div id="day5" class="page"><div class="container" style="padding-top:20px; text-align:center;">Day 5 Content</div></div>
+    <div id="day6" class="page"><div class="container" style="padding-top:20px; text-align:center;">Day 6 Content</div></div>
+    <div id="day7" class="page"><div class="container" style="padding-top:20px; text-align:center;">Day 7 Content</div></div>
 
 </div>
 
+<div id="tools" class="page" style="background: #F9F9F9;">
+    <div class="budget-header">
+        <h2 style="margin:0; font-weight:500;">旅程資訊</h2>
+        <div style="font-size:12px; color:#888; margin-top:5px;">Info & Contacts</div>
+    </div>
+    
+    <div class="container">
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">
+                <svg class="icon" viewBox="0 0 24 24" style="margin-right:5px;"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> 航班資訊
+            </div>
+            <div class="info-block">
+                <div><div class="info-label">DEPARTURE</div><div class="info-value">JX800 TPE 08:30</div></div>
+            </div>
+            <div class="info-block">
+                <div><div class="info-label">RETURN</div><div class="info-value">JX801 NRT 15:00</div></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">
+                <svg class="icon" viewBox="0 0 24 24" style="margin-right:5px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> 住宿清單
+            </div>
+            <div class="desc">
+                <strong>Day 1-2:</strong> 東急 Stay 祐天寺<br>
+                <strong>Day 3-4:</strong> EDIT X SEVEN 御殿場<br>
+                <strong>Day 5-6:</strong> 熱海 Fufu
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px; color:#cf4545;">
+                <svg class="icon" viewBox="0 0 24 24" style="margin-right:5px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> 緊急聯絡
+            </div>
+            <div class="info-block" style="background:#fff0f0;">
+                <div><div class="info-label">POLICE</div><div class="info-value">110</div></div>
+            </div>
+            <div class="info-block" style="background:#fff0f0;">
+                <div><div class="info-label">AMBULANCE</div><div class="info-value">119</div></div>
+            </div>
+            <div class="desc">
+                駐日代表處：+81-3-3280-7811
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="budget" class="page" style="background: #F9F9F9;">
+    <div class="budget-header">
+        <div class="budget-total-label">TOTAL EXPENSES</div>
+        <div class="budget-total-amount">¥<span id="totalAmount">0</span></div>
+    </div>
+
+    <div class="budget-input-group">
+        <input type="text" id="budgetItem" class="b-input" placeholder="消費項目 (例如: 晚餐)">
+        <input type="number" id="budgetAmount" class="b-input" placeholder="金額 (JPY)">
+        <button class="b-btn" onclick="addExpense()">新增紀錄</button>
+    </div>
+
+    <ul id="expenseList" class="expense-list">
+        </ul>
+    
+    <div style="text-align:center; padding-bottom:30px;">
+        <button onclick="clearBudget()" style="background:none; border:none; color:#999; text-decoration:underline; font-size:11px;">清除所有紀錄</button>
+    </div>
+</div>
+
 <nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchPage('day1', this, '2/7')"><span class="nav-day">7</span><span>D1</span></div>
-    <div class="nav-item" onclick="switchPage('day2', this, '2/8')"><span class="nav-day">8</span><span>D2</span></div>
-    <div class="nav-item" onclick="switchPage('day3', this, '2/9')"><span class="nav-day">9</span><span>D3</span></div>
-    <div class="nav-item" onclick="switchPage('day4', this, '2/10')"><span class="nav-day">10</span><span>D4</span></div>
-    <div class="nav-item" onclick="switchPage('day5', this, '2/11')"><span class="nav-day">11</span><span>D5</span></div>
-    <div class="nav-item" onclick="switchPage('day6', this, '2/12')"><span class="nav-day">12</span><span>D6</span></div>
-    <div class="nav-item" onclick="switchPage('day7', this, '2/13')"><span class="nav-day">13</span><span>D7</span></div>
-    <div class="nav-item" onclick="switchPage('tools', this, '工具')"><span>⚙️</span><span>工具</span></div>
+    <button class="nav-btn active" onclick="switchMainTab('itinerary', this)">
+        <svg class="icon icon-lg" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        行程
+    </button>
+    <button class="nav-btn" onclick="switchMainTab('tools', this)">
+        <svg class="icon icon-lg" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        資訊
+    </button>
+    <button class="nav-btn" onclick="switchMainTab('budget', this)">
+        <svg class="icon icon-lg" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        記帳
+    </button>
 </nav>
 
 <script>
-    // 頁面切換邏輯
-    function switchPage(pageId, navElement, dateTitle) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
+    // Tab Switching Logic
+    function switchDay(dayNum) {
+        // Reset Day Pages
+        document.querySelectorAll('#itinerary-container .page').forEach(el => el.classList.remove('active'));
+        document.getElementById('day' + dayNum).classList.add('active');
         
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        navElement.classList.add('active');
+        // Header Date Active State
+        document.querySelectorAll('.date-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.date-item')[dayNum-1].classList.add('active');
         
-        // 更新標題
-        if(pageId === 'tools') {
-            document.getElementById('page-title').innerText = "旅遊小工具";
-            document.getElementById('page-date').style.display = 'none';
-        } else {
-            const dayNum = pageId.replace('day', '');
-            document.getElementById('page-title').innerText = `Day ${dayNum} 行程`;
-            document.getElementById('page-date').style.display = 'inline-block';
-            document.getElementById('page-date').innerText = dateTitle;
+        // Update Title
+        document.getElementById('page-title').innerText = 'Day ' + dayNum;
+        
+        // Ensure Main Tab is Itinerary
+        switchMainTab('itinerary', document.querySelector('.bottom-nav .nav-btn:first-child'));
+    }
+
+    function switchMainTab(tabName, btnEl) {
+        // Hide all main containers
+        document.getElementById('itinerary-container').style.display = 'none';
+        document.getElementById('tools').classList.remove('active');
+        document.getElementById('budget').classList.remove('active');
+        document.getElementById('main-header').style.display = 'none';
+        
+        // Nav Active State
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        btnEl.classList.add('active');
+
+        if(tabName === 'itinerary') {
+            document.getElementById('itinerary-container').style.display = 'block';
+            document.getElementById('main-header').style.display = 'block';
+            // Determine which day is active, no need to change
+        } else if (tabName === 'tools') {
+            document.getElementById('tools').classList.add('active');
+        } else if (tabName === 'budget') {
+            document.getElementById('budget').classList.add('active');
         }
         window.scrollTo(0,0);
     }
 
-    // 記帳邏輯
-    let expenses = JSON.parse(localStorage.getItem('jp_expenses')) || [];
+    // Header Scroll Effect
+    window.addEventListener('scroll', () => {
+        const header = document.querySelector('header');
+        if (window.scrollY > 10) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    });
+
+    // Budget Logic (Local Storage)
+    let expenses = JSON.parse(localStorage.getItem('tripExpenses_v4')) || [];
 
     function renderExpenses() {
         const list = document.getElementById('expenseList');
         const totalEl = document.getElementById('totalAmount');
         list.innerHTML = '';
         let total = 0;
-        expenses.forEach(ex => {
-            total += Number(ex.price);
-            list.innerHTML += `<div class="expense-item"><span>${ex.desc}</span><span>¥${Number(ex.price).toLocaleString()}</span></div>`;
+
+        expenses.forEach((item, index) => {
+            total += Number(item.amount);
+            list.innerHTML += `
+                <li class="expense-item">
+                    <span>${item.desc}</span>
+                    <span style="display:flex; gap:10px;">
+                        ¥${Number(item.amount).toLocaleString()} 
+                        <span onclick="removeExpense(${index})" style="color:#ccc; cursor:pointer;">×</span>
+                    </span>
+                </li>
+            `;
         });
         totalEl.innerText = total.toLocaleString();
     }
 
     function addExpense() {
-        const desc = document.getElementById('itemDesc').value;
-        const price = document.getElementById('itemPrice').value;
-        if(desc && price) {
-            expenses.push({desc, price});
-            localStorage.setItem('jp_expenses', JSON.stringify(expenses));
+        const desc = document.getElementById('budgetItem').value;
+        const amount = document.getElementById('budgetAmount').value;
+        
+        if(desc && amount) {
+            expenses.push({ desc, amount });
+            localStorage.setItem('tripExpenses_v4', JSON.stringify(expenses));
             renderExpenses();
-            document.getElementById('itemDesc').value = '';
-            document.getElementById('itemPrice').value = '';
+            document.getElementById('budgetItem').value = '';
+            document.getElementById('budgetAmount').value = '';
         }
     }
 
-    function clearExpenses() {
-        if(confirm('確定清除所有記帳資料？')) {
+    function removeExpense(index) {
+        if(confirm('刪除此筆紀錄？')) {
+            expenses.splice(index, 1);
+            localStorage.setItem('tripExpenses_v4', JSON.stringify(expenses));
+            renderExpenses();
+        }
+    }
+
+    function clearBudget() {
+        if(confirm('確定清空所有記帳？')) {
             expenses = [];
-            localStorage.setItem('jp_expenses', JSON.stringify([]));
+            localStorage.setItem('tripExpenses_v4', JSON.stringify(expenses));
             renderExpenses();
         }
     }
