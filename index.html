@@ -186,4 +186,666 @@
 
     @keyframes slideUp {
         from { transform: translateY(100%); }
-        to {
+        to { transform: translateY(0); }
+    }
+    
+    /* Bottom Nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--line); display: flex; justify-content: space-around; padding: 10px 0; padding-bottom: max(10px, env(safe-area-inset-bottom)); z-index: 200; }
+    .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: 'Noto Sans JP'; font-size: 9px; color: #AAA; cursor: pointer; flex: 1; }
+    .nav-btn.active { color: #1A1A1A; }
+    .nav-btn svg { stroke-width: 1.2; }
+    .nav-btn.active svg { stroke-width: 2; }
+    
+    .page { display: none; transition: all 0.3s; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<header id="main-header">
+    <span class="trip-tag">TOKYO & FUJI TRIP 2026</span>
+    <h1 id="page-title">Day 1 | 蒲田入住</h1>
+    
+    <div class="date-scroller" id="dateScroller">
+        <div class="date-item active" onclick="switchDay(1)"><span class="dow">SAT</span><span class="day">07</span></div>
+        <div class="date-item" onclick="switchDay(2)"><span class="dow">SUN</span><span class="day">08</span></div>
+        <div class="date-item" onclick="switchDay(3)"><span class="dow">MON</span><span class="day">09</span></div>
+        <div class="date-item" onclick="switchDay(4)"><span class="dow">TUE</span><span class="day">10</span></div>
+        <div class="date-item" onclick="switchDay(5)"><span class="dow">WED</span><span class="day">11</span></div>
+        <div class="date-item" onclick="switchDay(6)"><span class="dow">THU</span><span class="day">12</span></div>
+        <div class="date-item" onclick="switchDay(7)"><span class="dow">FRI</span><span class="day">13</span></div>
+    </div>
+</header>
+
+<div id="itinerary-container" class="container active">
+    <div id="itinerary-timeline" style="padding-left: 20px;">
+        </div>
+    <button class="add-btn-float" onclick="openAddModal()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+</div>
+
+<div id="tools" class="page" style="background: #F9F9F9;">
+    <div class="container" style="padding-top: 20px;"> 
+        
+        <div class="card" style="margin-bottom:20px; padding: 15px 20px;">
+            <div class="card-title" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">Visit Japan Web 入境資料</div>
+            
+            <div id="vjwDisplay">
+                <strong style="display:block; margin-bottom: 5px; font-family: 'Noto Sans JP', sans-serif;">網站連結 (一鍵開啟)</strong>
+                <a id="vjwLinkDisplay" href="#" target="_blank" class="btn-nav" style="margin-top: 8px; margin-bottom: 15px; padding: 8px 0; font-size: 11px;">前往 VJW 登入頁面</a>
+                
+                <strong style="display:block; margin-bottom: 5px; font-family: 'Noto Sans JP', sans-serif;">QR Code 圖片</strong>
+                <div id="vjwQrCodeContainer" style="text-align:center; padding:15px; border: 1px dashed #ddd; margin-bottom:15px; display:none; background: #FFF;">
+                    <img id="vjwQrCodeImg" src="" style="width:100%; max-width:200px; height:auto; background: #fff; padding: 10px; border-radius: 2px;">
+                </div>
+                <button id="vjwQrCodeToggle" class="btn-nav" onclick="toggleQrCodeDisplay()" style="margin-top: 8px; margin-bottom: 15px; padding: 8px 0; font-size: 11px; background:#4CAF50;">顯示/隱藏 QR Code 圖片</button>
+                
+                <div style="text-align:right; margin-top:15px; border-top: 1px dashed var(--line); padding-top:10px;">
+                    <span style="font-size:12px; color:#999; cursor:pointer;" onclick="toggleVjwEditMode(true)">✏️ 編輯資料</span>
+                </div>
+            </div>
+            
+            <div id="vjwEdit" style="display:none;">
+                <label for="vjwLinkInput" style="font-size:12px; color:#555; display:block; margin-bottom:5px; font-family: 'Noto Sans JP', sans-serif;">VJW 登入連結 (必填)</label>
+                <input type="url" id="vjwLinkInput" class="modal-input" placeholder="例如: https://vjw.digital.go.jp/...">
+                
+                <label for="vjwQrInput" style="font-size:12px; color:#555; display:block; margin-bottom:5px; font-family: 'Noto Sans JP', sans-serif;">QR Code 圖片連結 (選填)</label>
+                <input type="url" id="vjwQrInput" class="modal-input" placeholder="例如: https://imgur.com/your-qrcode.png">
+                <p style="font-size:10px; color:#777; margin-top:-10px; margin-bottom:15px; font-family: 'Noto Sans JP', sans-serif;">請將 QR Code 截圖上傳至圖床，然後貼上連結。</p>
+                
+                <div class="modal-actions" style="margin-top:0;">
+                    <button class="modal-btn-cancel" onclick="toggleVjwEditMode(false)">取消</button>
+                    <button class="modal-btn-save" style="background:#2196F3;" onclick="saveVJWData()">儲存</button>
+                </div>
+            </div>
+        </div>
+        <div class="card" style="margin-bottom:20px; padding: 15px 20px;">
+            <div class="card-title" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">航班資訊</div>
+            <div style="background:#F7F7F7; padding:15px; border-radius:4px; margin-bottom: 20px;">
+                <div style="font-size:11px; color:#555; margin-bottom: 12px;">2 月 7 日 週六 | JL802</div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="text-align:left;"><div style="font-size:24px; font-weight:600;">10:55</div><div style="font-size:12px; color:#555;">TPE T2</div></div>
+                    <div style="text-align:center; flex-grow:1; padding-top:5px;"><div style="font-size:10px; color:#999;">3h 00m</div></div>
+                    <div style="text-align:right;"><div style="font-size:24px; font-weight:600;">14:55</div><div style="font-size:12px; color:#555;">NRT T2</div></div>
+                </div>
+            </div>
+            <div style="background:#F7F7F7; padding:15px; border-radius:4px;">
+                <div style="font-size:11px; color:#555; margin-bottom: 12px;">2 月 13 日 週五 | JL809</div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="text-align:left;"><div style="font-size:24px; font-weight:600;">18:05</div><div style="font-size:12px; color:#555;">NRT T2</div></div>
+                    <div style="text-align:center; flex-grow:1; padding-top:5px;"><div style="font-size:10px; color:#999;">4h 05m</div></div>
+                    <div style="text-align:right;"><div style="font-size:24px; font-weight:600;">21:10</div><div style="font-size:12px; color:#555;">TPE T2</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">住宿清單</div>
+            <div class="desc" style="line-height:1.6;">
+                <strong style="display:block; margin-bottom: 5px;">Day 1, 2, 4-7: <a href="http://galleryfutari.com/" target="_blank" style="color:#1A1A1A;">Gallery House 1&2</a></strong>
+                <span style="display:block; font-size:12px; color:#555;">日本〒146-0095 Tokyo, Ota City, Tamagawa</span>
+                <a href="https://maps.google.com/?q=Gallery+House+Kamata" class="btn-nav" target="_blank" style="margin-top: 8px; margin-bottom: 15px; padding: 8px 0; font-size: 11px; background:#444;">地圖導航</a>
+                <hr style="border: none; border-top: 1px dashed #eee; margin: 15px 0;">
+                <strong style="display:block; margin-bottom: 5px;">Day 3: <a href="http://www.mifujien.co.jp/" target="_blank" style="color:#1A1A1A;">Hotel 美冨士園</a></strong>
+                <span style="display:block; font-size:12px; color:#555;">207 Azagawa, Fujikawaguchiko</span>
+                <a href="https://maps.app.goo.gl/tjFVmaV9dbPPNdfF7" class="btn-nav" target="_blank" style="margin-top: 8px; padding: 8px 0; font-size: 11px; background:#444;">地圖導航</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="budget" class="page" style="background: #F9F9F9;">
+    <div class="budget-header">
+        <div class="budget-total-label">TOTAL EXPENSES</div>
+        <div class="budget-total-amount">¥<span id="totalAmount">0</span></div>
+    </div>
+    <div class="category-selector">
+        <input type="radio" id="cat-food" name="expense-cat" value="food" checked><label for="cat-food"><svg viewBox="0 0 24 24"><path d="M12 2l7 3v4a9 9 0 0 1-7 8 9 9 0 0 1-7-8V5z"/></svg>餐飲</label>
+        <input type="radio" id="cat-shop" name="expense-cat" value="shop"><label for="cat-shop"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>購物</label>
+        <input type="radio" id="cat-trans" name="expense-cat" value="trans"><label for="cat-trans"><svg viewBox="0 0 24 24"><path d="M10 16.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/><path d="M17.5 16.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/><path d="M5 20h14"/></svg>交通</label>
+        <input type="radio" id="cat-stay" name="expense-cat" value="stay"><label for="cat-stay"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>住宿</label>
+        <input type="radio" id="cat-other" name="expense-cat" value="other"><label for="cat-other"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>其他</label>
+    </div>
+    <div class="budget-input-group">
+        <input type="text" id="budgetItem" class="b-input" placeholder="消費項目 (例如: 拉麵)">
+        <input type="number" id="budgetAmount" class="b-input" placeholder="金額 (JPY)">
+        <button class="b-btn" onclick="addExpense()">新增紀錄</button>
+    </div>
+    <div style="text-align:center; padding: 10px 20px;">
+        <button class="b-btn" onclick="exportExpensesToCSV()" style="background:#555; margin-bottom: 10px; font-size: 14px;">匯出至 Excel/試算表</button>
+    </div>
+    <div id="exportOutput" style="display:none; margin: 0 20px 20px; padding: 10px; background: #fff; border: 1px dashed #ccc; border-radius: 2px;">
+        <p style="font-size:12px; margin-bottom: 5px; color:#555;">請複製以下文字貼到 Excel：</p>
+        <textarea id="csvData" style="width:100%; height:120px; font-size:12px; font-family: monospace; border: 1px solid #ddd; padding: 5px;"></textarea>
+    </div>
+    <ul id="expenseList" class="expense-list" style="margin: 0; background: #fff;"></ul>
+    <div style="text-align:center; padding: 30px 0;">
+        <button onclick="clearBudget()" style="background:none; border:none; color:#999; text-decoration:underline; font-size:11px;">清除所有紀錄</button>
+    </div>
+</div>
+
+<div id="checklist" class="page" style="background: #F9F9F9;">
+    <div class="container" style="padding-top: 20px;">
+        
+        <div style="background: var(--card-bg); padding: 20px; margin: 0 0 20px 0; border-radius: 4px; box-shadow: var(--shadow);">
+            <div style="font-size:12px; color:var(--text-sub); display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'Noto Sans JP', sans-serif;">
+                <span>準備進度</span>
+                <span id="progressPercentage">0%</span>
+            </div>
+            <div style="height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                <div id="progressBar" style="height: 100%; width: 0%; background: #388E3C; transition: width 0.5s ease-out;"></div>
+            </div>
+        </div>
+
+        <div class="checklist-item-container">
+             <ul id="checklistItems" style="list-style: none; padding: 0; margin: 0;">
+                </ul>
+        </div>
+        
+        <div style="text-align:center; padding: 10px 0;">
+            <button onclick="resetChecklist()" style="background:none; border:none; color:#999; text-decoration:underline; font-size:11px;">重設清單</button>
+        </div>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <button class="nav-btn active" onclick="switchMainTab('itinerary', this)">
+        <svg class="icon icon-lg" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>行程
+    </button>
+    <button class="nav-btn" onclick="switchMainTab('tools', this)">
+        <svg class="icon icon-lg" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>資訊
+    </button>
+    <button class="nav-btn" onclick="switchMainTab('budget', this)">
+        <svg class="icon icon-lg" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>記帳
+    </button>
+    <button class="nav-btn" onclick="switchMainTab('checklist', this)">
+        <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>清單
+    </button>
+</nav>
+
+<div id="addModal" class="modal-overlay" onclick="if(event.target.id === 'addModal') closeModal()">
+    <div class="modal-content">
+        <h2>新增行程項目 (Day <span id="modalDayNum">1</span>)</h2>
+        <input type="time" id="itemTime" class="modal-input-group" value="10:00" required>
+        <input type="text" id="itemTitle" class="modal-input" placeholder="標題 (必填)">
+        <input type="text" id="itemDesc" class="modal-input" placeholder="詳細說明/備註 (可選)">
+        <input type="url" id="itemLink" class="modal-input" placeholder="Google Map 或 網站連結 (可選)">
+
+        <div class="edit-tags-group">
+            <input type="radio" id="tag-edit-spot" name="itemTag" value="spot" checked>
+            <label for="tag-edit-spot" class="tag-edit-spot">景點/活動</label>
+            
+            <input type="radio" id="tag-edit-food" name="itemTag" value="food">
+            <label for="tag-edit-food" class="tag-edit-food">餐飲/美食</label>
+            
+            <input type="radio" id="tag-edit-stay" name="itemTag" value="stay">
+            <label for="tag-edit-stay" class="tag-edit-stay">住宿/休息</label>
+
+            <input type="radio" id="tag-edit-trans" name="itemTag" value="trans">
+            <label for="tag-edit-trans" class="tag-edit-trans">交通/移動</label>
+
+            <input type="radio" id="tag-edit-shop" name="itemTag" value="shop">
+            <label for="tag-edit-shop" class="tag-edit-shop">購物</label>
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-btn-cancel" onclick="closeModal()">取消</button>
+            <button class="modal-btn-save" onclick="saveNewItem()">儲存並新增</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 初始行程資料 ---
+    const initialItineraryData = {
+        1: { hero: { img: "https://raw.githubusercontent.com/nanako712-cell/2026tokyo/main/91820028.jpg", title: "抵達成田", subtitle: "蒲田入住" }, items: [
+            { time: "14:55", title: "JL802 抵達成田 (NRT)", desc: "入境、領行李、買交通卡。16:15 搭 NEX 成田特快前往品川。", tag: "trans", link: "" },
+            { time: "18:00", title: "Gallery House 入住", desc: "抵達住宿點，整理行李與休息。", tag: "stay", link: "https://maps.google.com/?q=Gallery+House+Kamata" },
+            { time: "19:00", title: "蒲田拉麵/溫泉 擇一", desc: "蒲田拉麵（家系/六厘舍/麵匠）或 蒲田溫泉（便宜好泡）。", tag: "food", link: "" },
+        ]},
+        2: { hero: { img: "https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_1200,h_630/w_80,x_15,y_15,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/oycn53bquvcaeq8aabjl/%E6%A9%AB%E6%BF%B1%E7%A7%81%E4%BA%BA%E5%8D%8A%E6%97%A5%E9%81%8A.jpg", title: "橫濱 Minato Mirai", subtitle: "家庭友善" }, items: [
+            { time: "09:30", title: "港未來 Minato Mirai 散策", desc: "大摩天輪 Cosmo Clock 21、Queen’s Square、海邊拍照。", tag: "spot", link: "" },
+            { time: "12:00", title: "午餐 (紅磚倉庫或 Queen’s Square)", desc: "紅磚倉庫內 bills 鬆餅或橫濱たちばな亭蛋包飯。", tag: "food", link: "" },
+            { time: "13:10", title: "橫濱紅磚倉庫", desc: "拍照、市集、購物。別忘了崎陽軒的紅磚燒賣！", tag: "spot", link: "" },
+            { time: "15:15", title: "杯麵博物館", desc: "孩子一定超愛自己做杯麵。", tag: "spot", link: "" },
+        ]},
+        3: { hero: { img: "https://photo.s3.com.tw/look/Upload/BlogArticleImages/18740/20230315105948403_700_0_80.jpg", title: "富士山大景日", subtitle: "河口湖入住" }, items: [
+            { time: "09:00", title: "前往河口湖 (退房)", desc: "蒲田→品川→大月（JR特急）→河口湖（富士急）。", tag: "trans", link: "" },
+            { time: "12:00", title: "午餐 | 餺飥藏 步成", desc: "山梨縣特色麵食「餺飥」。", tag: "food", link: "" },
+            { time: "13:15", title: "大石公園 & 木之花美術館", desc: "最容易拍到富士山全景，二月積雪機會高。", tag: "spot", link: "" },
+            { time: "17:00", title: "美富士園飯店 入住", desc: "晚餐、泡湯、休息。", tag: "stay", link: "http://www.mifujien.co.jp/" },
+        ]},
+        4: { hero: { img: "https://tw.wamazing.com/media/wp-content/uploads/sites/4/2025/03/dramahotspot_pixta_99069846_M.jpg", title: "河口湖半日遊", subtitle: "返回東京" }, items: [
+            { time: "09:30", title: "河口淺間神社", desc: "森林能量景點。若階梯結冰，在前面拍照即可。", tag: "spot", link: "" },
+            { time: "11:00", title: "富士吉田懷舊商店街", desc: "昭和風老街巡禮。", tag: "spot", link: "" },
+            { time: "12:00", title: "午餐 | 吉田烏龍麵", desc: "當地特色硬麵，推薦馬肉烏龍麵。", tag: "food", link: "" },
+            { time: "14:00", title: "返回蒲田", desc: "河口湖站→大月→品川→蒲田。預計 17:00 抵達。", tag: "trans", link: "" },
+        ]},
+        5: { hero: { img: "https://raw.githubusercontent.com/nanako712-cell/2026tokyo/main/DSCF2199.jpg", title: "淺草・晴空塔", subtitle: "最順暢路線" }, items: [
+            { time: "11:00", title: "淺草寺＋仲見世通り", desc: "文化觀光中心展望台（免費）、花月堂菠蘿麵包。", tag: "spot", link: "" },
+            { time: "13:00", title: "晴空塔前午餐", desc: "周邊有許多美食選擇。", tag: "food", link: "" },
+            { time: "14:00", title: "晴空塔 & Solamachi 商場", desc: "展望台 (若有預約)、兒童遊戲區。", tag: "spot", link: "" },
+        ]},
+        6: { hero: { img: "https://raw.githubusercontent.com/nanako712-cell/2026tokyo/main/33710023.JPG", title: "都心經典線", subtitle: "澀谷・六本木" }, items: [
+            { time: "09:00", title: "飛鳥山公園", desc: "京濱東北線直達，適合孩子玩樂。", tag: "spot", link: "" },
+            { time: "10:30", title: "澀谷站前 (八公 & 十字路口)", desc: "可加 Shibuya Sky (+1 小時)。", tag: "spot", link: "" },
+            { time: "12:10", title: "明治神宮", desc: "森林系能量、空氣乾淨。", tag: "spot", link: "" },
+            { time: "13:30", title: "表參道午餐 (A to Z / Bills)", desc: "在時尚區享用午餐。", tag: "food", link: "" },
+            { time: "15:00", title: "六本木之丘 & 東京鐵塔", desc: "六本木展望台看夕陽與夜景，然後轉往東京鐵塔。", tag: "spot", link: "" },
+        ]},
+        7: { hero: { img: "https://raw.githubusercontent.com/nanako712-cell/2026tokyo/main/DSCF2584.jpg", title: "返程日", subtitle: "18:05 NRT T2 起飛" }, items: [
+            { time: "09:00", title: "可選行程：羽田空港展望台", desc: "最推薦，近、好拍、孩子愛。", tag: "spot", link: "" },
+            { time: "09:00", title: "可選行程：上野阿美橫町/東京車站", desc: "快速補藥妝或買角色周邊/伴手禮。", tag: "shop", link: "" },
+            { time: "12:00", title: "午餐 & 打包", desc: "在蒲田周邊或羽田機場解決午餐，並預留時間回房收拾。", tag: "food", link: "" },
+            { time: "15:00", title: "前往成田機場", desc: "從蒲田出發，搭 NEX 或京成線。", tag: "trans", link: "" },
+        ]},
+    };
+    
+    let currentDay = 1;
+    let itineraryData = {};
+    const dayTitles = { 1: 'Day 1 | 蒲田入住', 2: 'Day 2 | 橫濱一日', 3: 'Day 3 | 河口湖大景', 4: 'Day 4 | 返回東京', 5: 'Day 5 | 淺草・晴空塔', 6: 'Day 6 | 都心經典線', 7: 'Day 7 | 返程日' };
+    const tagClasses = { food: 'tag-food', spot: 'tag-spot', trans: 'tag-trans', stay: 'tag-stay', shop: 'tag-shop' };
+    const tagNames = { food: '🍜 餐飲美食', spot: '🏞 景點活動', trans: '🚄 交通移動', stay: '🏨 住宿休息', shop: '🛍 購物血拼' };
+
+    // --- 初始準備清單資料 (NEW) ---
+    const initialChecklist = [
+        { item: "護照、簽證 (檢查效期)", checked: false },
+        { item: "Visit Japan Web 填寫完成", checked: false },
+        { item: "外幣兌換 (日幣)", checked: false },
+        { item: "交通票券 (JR Pass/周遊券)", checked: false },
+        { item: "機票、住宿預訂確認單列印/截圖", checked: false },
+        { item: "國際漫遊/SIM 卡/WiFi 機開通", checked: false },
+        { item: "國際信用卡/提款卡 (通知銀行出國日)", checked: false },
+        { item: "行動電源、轉接頭、充電線", checked: false },
+        { item: "緊急聯絡人資訊備份 (親友/保險)", checked: false },
+        { item: "行李箱秤重確認 (不要超重)", checked: false },
+    ];
+    let checklistData = [];
+
+
+    // --- 初始化和資料載入 ---
+    window.addEventListener('DOMContentLoaded', () => {
+        loadItineraryFromLocalStorage();
+        loadVJWData(); 
+        loadExpenses();
+        loadChecklist(); // 【NEW】載入清單
+        switchDay(1); // 預設顯示 Day 1
+    });
+
+    function saveItineraryToLocalStorage() {
+        localStorage.setItem('tripItinerary', JSON.stringify(itineraryData));
+    }
+
+    function loadItineraryFromLocalStorage() {
+        const storedData = localStorage.getItem('tripItinerary');
+        if (storedData) {
+            itineraryData = JSON.parse(storedData);
+        } else {
+            itineraryData = initialItineraryData;
+            saveItineraryToLocalStorage();
+        }
+    }
+
+    // --- VJW 資料邏輯 ---
+    function loadVJWData() {
+        const data = JSON.parse(localStorage.getItem('vjwData')) || { 
+            link: 'https://vjw.digital.go.jp/login', 
+            qrCode: '' 
+        };
+        
+        document.getElementById('vjwLinkInput').value = data.link;
+        document.getElementById('vjwQrInput').value = data.qrCode;
+        
+        const linkDisplay = document.getElementById('vjwLinkDisplay');
+        const qrImg = document.getElementById('vjwQrCodeImg');
+        const qrToggleBtn = document.getElementById('vjwQrCodeToggle');
+
+        linkDisplay.href = data.link;
+        linkDisplay.innerText = data.link ? '前往 VJW 登入頁面' : 'VJW 登入頁面 (未設定)';
+        linkDisplay.style.background = data.link ? '#1A1A1A' : '#A6A6A6';
+        
+        qrImg.src = data.qrCode || '';
+        document.getElementById('vjwQrCodeContainer').style.display = 'none';
+
+        if (!data.qrCode) {
+            qrToggleBtn.innerText = '未設定 QR Code 圖片';
+            qrToggleBtn.style.background = '#A6A6A6';
+            qrToggleBtn.disabled = true; 
+        } else {
+            qrToggleBtn.innerText = '顯示/隱藏 QR Code 圖片';
+            qrToggleBtn.style.background = '#4CAF50';
+            qrToggleBtn.disabled = false;
+        }
+    }
+
+    function saveVJWData() {
+        const link = document.getElementById('vjwLinkInput').value.trim();
+        const qrCode = document.getElementById('vjwQrInput').value.trim();
+        if (!link) { alert('VJW 登入連結是必填的喔！'); return; }
+        const data = { link, qrCode };
+        localStorage.setItem('vjwData', JSON.stringify(data));
+        loadVJWData();
+        toggleVjwEditMode(false);
+        alert('Visit Japan Web 資料已儲存！');
+    }
+
+    function toggleVjwEditMode(isEdit) {
+        document.getElementById('vjwDisplay').style.display = isEdit ? 'none' : 'block';
+        document.getElementById('vjwEdit').style.display = isEdit ? 'block' : 'none';
+        if (!isEdit) { loadVJWData(); }
+    }
+
+    function toggleQrCodeDisplay() {
+        const container = document.getElementById('vjwQrCodeContainer');
+        const toggleBtn = document.getElementById('vjwQrCodeToggle');
+        
+        if (!document.getElementById('vjwQrCodeImg').src) {
+            alert('請先在編輯模式中設定 QR Code 圖片連結！');
+            return;
+        }
+
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            toggleBtn.innerText = '隱藏 QR Code 圖片';
+        } else {
+            container.style.display = 'none';
+            toggleBtn.innerText = '顯示 QR Code 圖片';
+        }
+    }
+    // --- VJW 資料邏輯 (END) ---
+
+    // --- 清單邏輯 (NEW) ---
+    function loadChecklist() {
+        const storedData = localStorage.getItem('tripChecklist');
+        if (storedData) {
+            checklistData = JSON.parse(storedData);
+        } else {
+            checklistData = initialChecklist;
+            saveChecklist();
+        }
+        renderChecklist();
+    }
+
+    function saveChecklist() {
+        localStorage.setItem('tripChecklist', JSON.stringify(checklistData));
+        updateProgressBar();
+    }
+
+    function renderChecklist() {
+        const listContainer = document.getElementById('checklistItems');
+        listContainer.innerHTML = '';
+
+        checklistData.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = `checklist-item ${item.checked ? 'checked' : ''}`;
+            li.setAttribute('onclick', `toggleChecklistItem(${index})`);
+            
+            li.innerHTML = `
+                <input type="checkbox" ${item.checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleChecklistItem(${index})">
+                <span>${item.item}</span>
+            `;
+            listContainer.appendChild(li);
+        });
+        updateProgressBar();
+    }
+
+    function toggleChecklistItem(index) {
+        checklistData[index].checked = !checklistData[index].checked;
+        saveChecklist();
+        renderChecklist();
+    }
+
+    function updateProgressBar() {
+        if (checklistData.length === 0) return;
+        const completed = checklistData.filter(item => item.checked).length;
+        const total = checklistData.length;
+        const percentage = Math.round((completed / total) * 100);
+
+        document.getElementById('progressPercentage').innerText = `${percentage}%`;
+        document.getElementById('progressBar').style.width = `${percentage}%`;
+    }
+
+    function resetChecklist() {
+        if (confirm('確定要重設清單，清除所有勾選狀態嗎？')) {
+            checklistData = initialChecklist.map(item => ({ ...item, checked: false }));
+            saveChecklist();
+            renderChecklist();
+            alert('清單已重設完成！');
+        }
+    }
+    // --- 清單邏輯 (END) ---
+
+
+    // --- 行程渲染邏輯 ---
+    function renderItinerary(dayNum) {
+        currentDay = dayNum;
+        const data = itineraryData[dayNum];
+        const timeline = document.getElementById('itinerary-timeline');
+        timeline.innerHTML = '';
+
+        // 渲染 Hero 區塊
+        document.querySelector('#itinerary-container').innerHTML = `
+            <div class="hero">
+                <img src="${data.hero.img}" alt="${data.hero.title}">
+                <div class="hero-text">
+                    <div class="hero-title">${data.hero.title}</div>
+                    <div class="hero-subtitle">${data.hero.subtitle}</div>
+                </div>
+            </div>
+            <div class="weather-row">
+                <div class="weather-col"><span class="weather-time">預估</span><svg class="icon" viewBox="0 0 24 24"><path d="M17.5 19c0-1.7-1.3-3-3-3h-11a4 4 0 0 1-.8-7.9 5 5 0 0 1 9.8-1.2 3 3 0 0 1 5 1.7"/></svg><span class="weather-temp">14°C</span></div>
+                <div class="weather-col"><span class="weather-time">點擊</span><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span class="weather-temp">查看</span></div>
+                <div class="weather-col"><span class="weather-time">即時</span><svg class="icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="weather-temp">天氣</span></div>
+            </div>
+            <div id="itinerary-timeline" style="padding: 0 20px;"></div>
+            <button class="add-btn-float" onclick="openAddModal()">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <div style="height: 50px;"></div>
+        `;
+        const newTimeline = document.getElementById('itinerary-timeline');
+
+        // 渲染行程項目
+        data.items.forEach((item, index) => {
+            const tagHtml = `<div class="tag ${tagClasses[item.tag] || ''}">${tagNames[item.tag] || item.tag}</div>`;
+            const linkHtml = item.link ? `<a href="${item.link}" class="btn-nav" target="_blank"><svg class="icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> 地圖/網站</a>` : '';
+            
+            const itemHtml = `
+                <div class="timeline-item" data-index="${index}">
+                    <div class="time-badge">${item.time}</div>
+                    <div class="card">
+                        ${tagHtml}
+                        <div class="card-title">${item.title}</div>
+                        <div class="desc" style="border-top: none; padding-top: 0; margin-top: 0; line-height: 1.5;">${item.desc}</div>
+                        ${linkHtml}
+                        <div style="text-align:right; margin-top:15px; border-top: 1px dashed var(--line); padding-top:10px;">
+                            <span style="font-size:12px; color:#999; cursor:pointer;" onclick="deleteItem(${dayNum}, ${index})">🗑 刪除</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            newTimeline.innerHTML += itemHtml;
+        });
+
+        document.querySelectorAll('.date-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.date-item')[dayNum-1].classList.add('active');
+        document.getElementById('page-title').innerText = dayTitles[dayNum];
+        window.scrollTo(0,0);
+    }
+    
+    // --- 行程編輯功能 ---
+    function openAddModal() {
+        document.getElementById('modalDayNum').innerText = currentDay;
+        document.getElementById('addModal').style.display = 'flex';
+        document.getElementById('itemTime').value = '10:00';
+        document.getElementById('itemTitle').value = '';
+        document.getElementById('itemDesc').value = '';
+        document.getElementById('itemLink').value = '';
+        document.getElementById('tag-edit-spot').checked = true;
+    }
+
+    function closeModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    function saveNewItem() {
+        const time = document.getElementById('itemTime').value;
+        const title = document.getElementById('itemTitle').value.trim();
+        const desc = document.getElementById('itemDesc').value.trim();
+        const link = document.getElementById('itemLink').value.trim();
+        const tag = document.querySelector('input[name="itemTag"]:checked').value;
+
+        if (!time || !title) { alert('時間和標題是必填的喔！'); return; }
+
+        const newItem = { time, title, desc, link, tag };
+        itineraryData[currentDay].items.push(newItem);
+        itineraryData[currentDay].items.sort((a, b) => (a.time > b.time) ? 1 : -1);
+
+        saveItineraryToLocalStorage();
+        renderItinerary(currentDay);
+        closeModal();
+    }
+
+    function deleteItem(dayNum, itemIndex) {
+        if(confirm(`確定要刪除 Day ${dayNum} 的這個行程項目嗎？`)) {
+            itineraryData[dayNum].items.splice(itemIndex, 1);
+            saveItineraryToLocalStorage();
+            renderItinerary(dayNum);
+        }
+    }
+
+    // --- 核心導航邏輯 (修正版) ---
+    function switchDay(dayNum) {
+        // 先確保切換到 itinerary 頁面
+        const itineraryBtn = document.querySelector('.bottom-nav .nav-btn:first-child');
+        if (!itineraryBtn.classList.contains('active')) {
+            switchMainTab('itinerary', itineraryBtn);
+        }
+        renderItinerary(dayNum);
+    }
+
+    function switchMainTab(tabName, btnEl) {
+        // 頁面切換設定
+        document.getElementById('itinerary-container').classList.remove('active');
+        document.getElementById('tools').classList.remove('active');
+        document.getElementById('budget').classList.remove('active');
+        document.getElementById('checklist').classList.remove('active');
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        btnEl.classList.add('active');
+
+        // Header 調整
+        const dateScroller = document.getElementById('dateScroller');
+        const header = document.getElementById('main-header');
+        
+        // 重設所有 page 的 paddingTop (清除上次設定)
+        document.getElementById('tools').style.paddingTop = '0';
+        document.getElementById('budget').style.paddingTop = '0';
+        document.getElementById('checklist').style.paddingTop = '0';
+
+        if(tabName === 'itinerary') {
+            document.getElementById('itinerary-container').classList.add('active');
+            header.style.display = 'block';
+            document.getElementById('page-title').innerText = dayTitles[currentDay];
+            dateScroller.style.display = 'flex'; // 行程頁顯示日期滑動列
+        } else if (tabName === 'tools') {
+            document.getElementById('tools').classList.add('active');
+            header.style.display = 'block';
+            document.getElementById('page-title').innerText = '旅程資訊';
+            dateScroller.style.display = 'none'; // 非行程頁隱藏日期滑動列
+            document.getElementById('tools').style.paddingTop = '70px'; // 增加頂部間距
+            loadVJWData();
+        } else if (tabName === 'budget') {
+            document.getElementById('budget').classList.add('active');
+            header.style.display = 'block';
+            document.getElementById('page-title').innerText = '旅行記帳';
+            dateScroller.style.display = 'none'; // 非行程頁隱藏日期滑動列
+            document.getElementById('budget').style.paddingTop = '70px'; // 增加頂部間距
+            loadExpenses();
+        } else if (tabName === 'checklist') { 
+            document.getElementById('checklist').classList.add('active');
+            header.style.display = 'block';
+            document.getElementById('page-title').innerText = '出國前準備清單';
+            dateScroller.style.display = 'none'; // 非行程頁隱藏日期滑動列
+            document.getElementById('checklist').style.paddingTop = '70px'; // 增加頂部間距
+            renderChecklist(); 
+        }
+        window.scrollTo(0,0);
+    }
+
+    // --- 記帳邏輯 ---
+    const iconsPath = { food: '<path d="M12 2l7 3v4a9 9 0 0 1-7 8 9 9 0 0 1-7-8V5z"/>', shop: '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>', trans: '<path d="M10 16.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/><path d="M17.5 16.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/><path d="M5 20h14"/>', stay: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>', other: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>' };
+    const categoryNames = { food: '餐飲', shop: '購物', trans: '交通', stay: '住宿', other: '其他' };
+
+    function loadExpenses() {
+        const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
+        const list = document.getElementById('expenseList');
+        let total = 0; list.innerHTML = ''; 
+        expenses.slice().reverse().forEach((exp, index) => {
+            const originalIndex = expenses.length - 1 - index;
+            const li = document.createElement('li'); li.classList.add('expense-item');
+            const path = iconsPath[exp.category] || iconsPath['other'];
+            const catName = categoryNames[exp.category] || '其他';
+            li.innerHTML = `<div class="expense-item-left"><div class="expense-icon-circle"><svg viewBox="0 0 24 24">${path}</svg></div><div class="expense-info"><span class="expense-name">${exp.item}</span><span class="expense-cat-name">${catName}</span></div></div><div style="display:flex; align-items:center;"><span class="expense-amount">¥${exp.amount.toLocaleString('en-US')}</span><span class="delete-btn" onclick="removeExpense(${originalIndex})">×</span></div>`;
+            list.appendChild(li); total += exp.amount;
+        });
+        document.getElementById('totalAmount').innerText = total.toLocaleString('en-US');
+    }
+
+    function addExpense() {
+        const item = document.getElementById('budgetItem').value.trim();
+        const amount = parseInt(document.getElementById('budgetAmount').value, 10); 
+        const selectedCat = document.querySelector('input[name="expense-cat"]:checked').value;
+        if (item && !isNaN(amount) && amount > 0) {
+            const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
+            expenses.push({ item, amount, category: selectedCat, timestamp: Date.now() });
+            localStorage.setItem('tripExpenses', JSON.stringify(expenses));
+            document.getElementById('budgetItem').value = ''; document.getElementById('budgetAmount').value = '';
+            loadExpenses();
+            document.getElementById('exportOutput').style.display = 'none';
+        } else { alert('請輸入有效內容！'); }
+    }
+
+    function removeExpense(index) {
+        if(confirm('刪除此紀錄？')) {
+            const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
+            expenses.splice(index, 1);
+            localStorage.setItem('tripExpenses', JSON.stringify(expenses));
+            loadExpenses();
+        }
+    }
+
+    function clearBudget() {
+        if (confirm('清除所有紀錄？')) {
+            localStorage.removeItem('tripExpenses'); loadExpenses();
+        }
+    }
+
+    function exportExpensesToCSV() {
+        const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
+        const outputDiv = document.getElementById('exportOutput');
+        const textarea = document.getElementById('csvData');
+        if (expenses.length === 0) { alert('無資料可匯出'); return; }
+        
+        let csvContent = "分類\t項目\t金額 (JPY)\n"; 
+        expenses.forEach(exp => { csvContent += `${categoryNames[exp.category]}\t${exp.item}\t${exp.amount}\n`; });
+        textarea.value = csvContent;
+        outputDiv.style.display = 'block'; textarea.select(); alert('資料已生成，請複製文字貼到 Excel');
+    }
+
+    // Header Scroll Effect
+    window.addEventListener('scroll', () => {
+        const header = document.querySelector('header');
+        // 只有在行程頁面 (dateScroller 顯示時) 才需要滾動效果
+        const dateScroller = document.getElementById('dateScroller');
+        if (dateScroller && dateScroller.style.display !== 'none') {
+            if (window.scrollY > 10) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        } else {
+            header.classList.remove('scrolled'); // 非行程頁不顯示陰影
+        }
+    });
+</script>
+</body>
+</html>
