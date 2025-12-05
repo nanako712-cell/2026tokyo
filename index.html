@@ -580,8 +580,40 @@
         <div class="budget-total-amount">¥<span id="totalAmount">0</span></div>
     </div>
 
+    <div class="category-selector">
+        <input type="radio" id="cat-food" name="expense-cat" value="food" checked>
+        <label for="cat-food">
+            <svg viewBox="0 0 24 24"><path d="M12 2l7 3v4a9 9 0 0 1-7 8 9 9 0 0 1-7-8V5z"/></svg>
+            餐飲
+        </label>
+        
+        <input type="radio" id="cat-shop" name="expense-cat" value="shop">
+        <label for="cat-shop">
+            <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            購物
+        </label>
+        
+        <input type="radio" id="cat-trans" name="expense-cat" value="trans">
+        <label for="cat-trans">
+            <svg viewBox="0 0 24 24"><path d="M10 16.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/><path d="M17.5 16.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/><path d="M5 20h14"/></svg>
+            交通
+        </label>
+        
+        <input type="radio" id="cat-stay" name="expense-cat" value="stay">
+        <label for="cat-stay">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            住宿
+        </label>
+        
+        <input type="radio" id="cat-other" name="expense-cat" value="other">
+        <label for="cat-other">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            其他
+        </label>
+    </div>
+
     <div class="budget-input-group">
-        <input type="text" id="budgetItem" class="b-input" placeholder="消費項目 (例如: 晚餐)">
+        <input type="text" id="budgetItem" class="b-input" placeholder="消費項目 (例如: 拉麵)">
         <input type="number" id="budgetAmount" class="b-input" placeholder="金額 (JPY)">
         <button class="b-btn" onclick="addExpense()">新增紀錄</button>
     </div>
@@ -594,14 +626,14 @@
         <p style="font-size:12px; margin-bottom: 5px; color:#555;">請**複製**以下文字，貼到 Excel 或 Google Sheet 的 **A1 儲存格**：</p>
         <textarea id="csvData" style="width:100%; height:120px; font-size:12px; font-family: monospace; border: 1px solid #ddd; padding: 5px;"></textarea>
     </div>
-    <ul id="expenseList" class="expense-list">
+
+    <ul id="expenseList" class="expense-list" style="margin: 0; background: #fff;">
         </ul>
     
-    <div style="text-align:center; padding-bottom:30px;">
+    <div style="text-align:center; padding: 30px 0;">
         <button onclick="clearBudget()" style="background:none; border:none; color:#999; text-decoration:underline; font-size:11px;">清除所有紀錄</button>
     </div>
 </div>
-
 
 <nav class="bottom-nav">
     <button class="nav-btn active" onclick="switchMainTab('itinerary', this)">
@@ -675,11 +707,19 @@
         window.scrollTo(0,0);
     }
     
-// ... (保留 switchDay, switchMainTab 等行程切換函數)
+// ===========================================
+// 記帳功能邏輯 (已加入 localStorage 儲存、分類與匯出功能)
+// ===========================================
 
-// ===========================================
-// 記帳功能邏輯 (已加入 localStorage 儲存與匯出功能)
-// ===========================================
+// 定義圖示路徑 (SVG Path) 方便重用
+const iconsPath = {
+    food: '<path d="M12 2l7 3v4a9 9 0 0 1-7 8 9 9 0 0 1-7-8V5z"/>',
+    shop: '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+    trans: '<path d="M10 16.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/><path d="M17.5 16.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z"/><path d="M5 20h14"/>',
+    stay: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+    other: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+};
+const categoryNames = { food: '餐飲', shop: '購物', trans: '交通', stay: '住宿', other: '其他' };
 
 // 在頁面載入時，從 localStorage 載入資料
 window.addEventListener('DOMContentLoaded', () => {
@@ -694,11 +734,33 @@ function loadExpenses() {
     list.innerHTML = ''; 
 
     // 將最新的項目放在最上方
-    expenses.slice().reverse().forEach(exp => {
+    expenses.slice().reverse().forEach((exp, index) => {
+        // 原始索引 (因為是 reverse 顯示，刪除時需要正確索引)
+        const originalIndex = expenses.length - 1 - index;
+        
         const li = document.createElement('li');
         li.classList.add('expense-item');
-        li.innerHTML = `<span>${exp.item}</span><span>¥${exp.amount.toLocaleString('en-US')}</span>`;
-        list.prepend(li);
+        
+        // 取得分類對應的 SVG path，預設為 other
+        const path = iconsPath[exp.category] || iconsPath['other'];
+        const catName = categoryNames[exp.category] || '其他';
+
+        li.innerHTML = `
+            <div class="expense-item-left">
+                <div class="expense-icon-circle">
+                    <svg viewBox="0 0 24 24">${path}</svg>
+                </div>
+                <div class="expense-info">
+                    <span class="expense-name">${exp.item}</span>
+                    <span class="expense-cat-name">${catName}</span>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center;">
+                <span class="expense-amount">¥${exp.amount.toLocaleString('en-US')}</span>
+                <span class="delete-btn" onclick="removeExpense(${originalIndex})">×</span>
+            </div>
+        `;
+        list.appendChild(li);
         total += exp.amount;
     });
 
@@ -710,27 +772,38 @@ function addExpense() {
     const amountInput = document.getElementById('budgetAmount');
     const item = itemInput.value.trim();
     const amount = parseInt(amountInput.value, 10); 
+    
+    // 取得當前選中的分類
+    const selectedCat = document.querySelector('input[name="expense-cat"]:checked').value;
 
     if (item && !isNaN(amount) && amount > 0) {
-        // 讀取舊資料並新增新資料
         const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
-        const newExpense = { item: item, amount: amount, timestamp: Date.now() };
+        const newExpense = { 
+            item: item, 
+            amount: amount, 
+            category: selectedCat, // 儲存分類
+            timestamp: Date.now() 
+        };
         expenses.push(newExpense); 
         
-        // 儲存回 localStorage
         localStorage.setItem('tripExpenses', JSON.stringify(expenses));
 
-        // 清除輸入框
         itemInput.value = '';
         amountInput.value = '';
         
-        // 重新載入並更新畫面
         loadExpenses();
-        // 隱藏匯出框
         document.getElementById('exportOutput').style.display = 'none';
-
     } else {
         alert('請輸入有效的消費項目和金額！');
+    }
+}
+
+function removeExpense(index) {
+    if(confirm('確定刪除此筆紀錄？')) {
+        const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
+        expenses.splice(index, 1);
+        localStorage.setItem('tripExpenses', JSON.stringify(expenses));
+        loadExpenses();
     }
 }
 
@@ -743,7 +816,7 @@ function clearBudget() {
     }
 }
 
-// 🎯 新增的匯出功能
+// 匯出功能
 function exportExpensesToCSV() {
     const expenses = JSON.parse(localStorage.getItem('tripExpenses')) || [];
     const outputDiv = document.getElementById('exportOutput');
@@ -754,36 +827,26 @@ function exportExpensesToCSV() {
         return;
     }
 
-    // 建立試算表格式內容 (使用 Tab 鍵 \t 分隔，這樣貼到 Excel 才能自動分欄)
-    let csvContent = "項目\t金額 (JPY)\n"; // 標題行
+    let csvContent = "分類\t項目\t金額 (JPY)\n"; 
 
     expenses.forEach(exp => {
-        // 清理項目名稱中的換行符
+        const catName = categoryNames[exp.category] || '其他';
         const cleanedItem = exp.item.replace(/[\t\n\r]/g, ' '); 
-        csvContent += `${cleanedItem}\t${exp.amount}\n`;
+        csvContent += `${catName}\t${cleanedItem}\t${exp.amount}\n`;
     });
 
-    // 顯示輸出區塊並填入資料
     textarea.value = csvContent;
     outputDiv.style.display = 'block';
-    
-    // 自動選取文字，方便使用者一鍵複製
     textarea.select();
     alert('資料已顯示在下方方框，請複製文字後貼上到您的 Google Sheet 或 Excel。');
 }
 
-// ... (保留 Header Scroll Effect 函數)
-
-    // Header Scroll Effect (使 Header 在滾動時有陰影)
-    window.addEventListener('scroll', () => {
-        const header = document.querySelector('header');
-        if (window.scrollY > 10) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
-        }
-    });
-
-</script>
-</body>
-</html>
+// Header Scroll Effect
+window.addEventListener('scroll', () => {
+    const header = document.querySelector('header');
+    if (window.scrollY > 10) {
+        header.classList.add('scrolled');
+    } else {
+        header.classList.remove('scrolled');
+    }
+});
