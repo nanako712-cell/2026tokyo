@@ -196,7 +196,8 @@
     .nav-btn svg { stroke-width: 1.2; }
     .nav-btn.active svg { stroke-width: 2; }
     
-    .page { display: none; transition: all 0.3s; }
+    /* 修正: 所有主要頁面容器都使用 .page 讓 display: none 生效 */
+    .page { display: none; transition: all 0.3s; } 
     .page.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -218,7 +219,7 @@
     </div>
 </header>
 
-<div id="itinerary-container" class="container active">
+<div id="itinerary-container" class="page container active">
     <div id="itinerary-timeline" style="padding-left: 20px;">
         </div>
     <button class="add-btn-float" onclick="openAddModal()">
@@ -414,7 +415,7 @@
         3: { hero: { img: "https://photo.s3.com.tw/look/Upload/BlogArticleImages/18740/20230315105948403_700_0_80.jpg", title: "富士山大景日", subtitle: "河口湖入住" }, items: [
             { time: "09:00", title: "前往河口湖 (退房)", desc: "蒲田→品川→大月（JR特急）→河口湖（富士急）。", tag: "trans", link: "" },
             { time: "12:00", title: "午餐 | 餺飥藏 步成", desc: "山梨縣特色麵食「餺飥」。", tag: "food", link: "" },
-            { time: "13:15", title: "大石公園 & 木之花美術館", desc: "最容易拍到富士山全景，二月積雪機會高。", tag: "spot", link: "" },
+            { time: "13:15", "title": "大石公園 & 木之花美術館", desc: "最容易拍到富士山全景，二月積雪機會高。", tag: "spot", link: "" },
             { time: "17:00", title: "美富士園飯店 入住", desc: "晚餐、泡湯、休息。", tag: "stay", link: "http://www.mifujien.co.jp/" },
         ]},
         4: { hero: { img: "https://tw.wamazing.com/media/wp-content/uploads/sites/4/2025/03/dramahotspot_pixta_99069846_M.jpg", title: "河口湖半日遊", subtitle: "返回東京" }, items: [
@@ -471,6 +472,8 @@
         loadVJWData(); 
         loadExpenses();
         loadChecklist(); // 【NEW】載入清單
+        // 因為 #itinerary-container 現在也是 .page，需要顯式設為 active
+        document.getElementById('itinerary-container').classList.add('active'); 
         switchDay(1); // 預設顯示 Day 1
     });
 
@@ -622,16 +625,19 @@
     function renderItinerary(dayNum) {
         currentDay = dayNum;
         const data = itineraryData[dayNum];
-        const timeline = document.getElementById('itinerary-timeline');
-        timeline.innerHTML = '';
+        // 確保 timeline 被重新建立以清空舊內容
+        const itineraryContainer = document.querySelector('#itinerary-container');
 
         // 渲染 Hero 區塊
-        document.querySelector('#itinerary-container').innerHTML = `
+        itineraryContainer.innerHTML = `
             <div class="hero">
                 <img src="${data.hero.img}" alt="${data.hero.title}">
                 <div class="hero-text">
                     <div class="hero-title">${data.hero.title}</div>
-                    <div class="hero-subtitle">${data.hero.subtitle}</div>
+                    <div class="hero-subtitle">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 12v-1h2c1.7 0 3.2-1.2 3.6-2.9 0-.1 0-.1 0-.2 0-.2.1-.3.2-.4.1-.1.2-.2.4-.2.2 0 .4 0 .5.1.2.1.3.2.4.4.1.2.1.4.1.6 0 .4-.2.8-.5 1.1-.3.3-.8.5-1.3.5H4z" fill="#fff" stroke="none"/></svg>
+                        <span>${data.hero.subtitle}</span>
+                    </div>
                 </div>
             </div>
             <div class="weather-row">
@@ -717,6 +723,8 @@
     }
 
     // --- 核心導航邏輯 (修正版) ---
+    const allPages = ['itinerary-container', 'tools', 'budget', 'checklist'];
+
     function switchDay(dayNum) {
         // 先確保切換到 itinerary 頁面
         const itineraryBtn = document.querySelector('.bottom-nav .nav-btn:first-child');
@@ -727,13 +735,17 @@
     }
 
     function switchMainTab(tabName, btnEl) {
-        // 頁面切換設定
-        document.getElementById('itinerary-container').classList.remove('active');
-        document.getElementById('tools').classList.remove('active');
-        document.getElementById('budget').classList.remove('active');
-        document.getElementById('checklist').classList.remove('active');
+        // 頁面切換設定: 移除所有 active，再加入對應的 active
+        allPages.forEach(id => {
+            document.getElementById(id).classList.remove('active');
+        });
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         btnEl.classList.add('active');
+
+        // 顯示當前頁面
+        const currentPageId = tabName + (tabName === 'itinerary' ? '-container' : '');
+        document.getElementById(currentPageId).classList.add('active');
+
 
         // Header 調整
         const dateScroller = document.getElementById('dateScroller');
@@ -745,27 +757,19 @@
         document.getElementById('checklist').style.paddingTop = '0';
 
         if(tabName === 'itinerary') {
-            document.getElementById('itinerary-container').classList.add('active');
-            header.style.display = 'block';
             document.getElementById('page-title').innerText = dayTitles[currentDay];
             dateScroller.style.display = 'flex'; // 行程頁顯示日期滑動列
         } else if (tabName === 'tools') {
-            document.getElementById('tools').classList.add('active');
-            header.style.display = 'block';
             document.getElementById('page-title').innerText = '旅程資訊';
             dateScroller.style.display = 'none'; // 非行程頁隱藏日期滑動列
             document.getElementById('tools').style.paddingTop = '70px'; // 增加頂部間距
             loadVJWData();
         } else if (tabName === 'budget') {
-            document.getElementById('budget').classList.add('active');
-            header.style.display = 'block';
             document.getElementById('page-title').innerText = '旅行記帳';
             dateScroller.style.display = 'none'; // 非行程頁隱藏日期滑動列
             document.getElementById('budget').style.paddingTop = '70px'; // 增加頂部間距
             loadExpenses();
         } else if (tabName === 'checklist') { 
-            document.getElementById('checklist').classList.add('active');
-            header.style.display = 'block';
             document.getElementById('page-title').innerText = '出國前準備清單';
             dateScroller.style.display = 'none'; // 非行程頁隱藏日期滑動列
             document.getElementById('checklist').style.paddingTop = '70px'; // 增加頂部間距
